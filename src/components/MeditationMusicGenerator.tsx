@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Music, Clock, Volume2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Sparkles, Music, Clock, Volume2, CheckCircle, AlertCircle, Download, Play } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { meditationMusicAgent } from './CoralProtocolAgent';
+import { musicGenerationAgent, MusicGenerationResponse } from './MusicGenerationAgent';
 
 interface MusicPromptConfig {
   duration: number;
@@ -47,31 +48,49 @@ export const MeditationMusicGenerator = () => {
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAgentRegistered, setIsAgentRegistered] = useState(false);
+  const [isGeneratingMusic, setIsGeneratingMusic] = useState(false);
+  const [isMusicAgentRegistered, setIsMusicAgentRegistered] = useState(false);
+  const [generatedMusic, setGeneratedMusic] = useState<MusicGenerationResponse | null>(null);
   const { toast } = useToast();
 
-  // Initialize Coral Protocol agent on component mount
+  // Initialize Coral Protocol agents on component mount
   useEffect(() => {
-    const initializeAgent = async () => {
+    const initializeAgents = async () => {
       try {
-        const registered = await meditationMusicAgent.register();
-        setIsAgentRegistered(registered);
-        if (registered) {
+        // Initialize prompt generation agent
+        const promptRegistered = await meditationMusicAgent.register();
+        setIsAgentRegistered(promptRegistered);
+        
+        // Initialize music generation agent
+        const musicRegistered = await musicGenerationAgent.register();
+        setIsMusicAgentRegistered(musicRegistered);
+        
+        if (promptRegistered && musicRegistered) {
           toast({
             title: "🌊 Coral Protocol Connected",
-            description: "Meditation Music Generator agent is now online and ready.",
+            description: "Both Prompt & Music Generation agents ready",
+          });
+        } else if (promptRegistered || musicRegistered) {
+          toast({
+            title: "⚠️ Partial Coral Protocol Connection", 
+            description: "Some agents running in standalone mode",
+          });
+        } else {
+          toast({
+            title: "🔧 Standalone Mode Active",
+            description: "All agents running locally without Coral Protocol",
           });
         }
       } catch (error) {
-        console.error('Failed to initialize Coral Protocol agent:', error);
+        console.error('Agent initialization failed:', error);
         toast({
-          title: "Agent initialization failed",
-          description: "Running in standalone mode without Coral Protocol.",
-          variant: "destructive"
+          title: "🔧 Local Mode Active",
+          description: "Agents running without Coral Protocol connectivity",
         });
       }
     };
     
-    initializeAgent();
+    initializeAgents();
   }, [toast]);
 
   const generatePrompt = async () => {
@@ -150,6 +169,68 @@ STANDALONE MODE:
         ? prev.instruments.filter(i => i !== instrument)
         : [...prev.instruments, instrument]
     }));
+  };
+
+  const generateMusic = async () => {
+    if (!generatedPrompt.trim()) {
+      toast({
+        title: "No prompt available",
+        description: "Please generate a text prompt first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingMusic(true);
+    try {
+      const musicRequest = {
+        id: `music-${Date.now()}`,
+        textPrompt: generatedPrompt,
+        musicConfig: {
+          duration: config.duration * 60, // Convert minutes to seconds
+          style: config.mood?.toLowerCase() || 'ambient meditation',
+          tempo: config.tempo,
+          key: config.key,
+          mood: config.mood || 'peaceful',
+          instruments: config.instruments,
+          includeVocals: false
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      const musicResult = await musicGenerationAgent.generateMusic(musicRequest);
+      setGeneratedMusic(musicResult);
+      
+      toast({
+        title: "🎵 Music Generated Successfully",
+        description: `Generated ${Math.round(musicResult.duration)}s meditation track`,
+      });
+    } catch (error) {
+      console.error('Music generation failed:', error);
+      toast({
+        title: "❌ Music Generation Failed",
+        description: "Please try again or check your settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingMusic(false);
+    }
+  };
+
+  const downloadMusic = () => {
+    if (!generatedMusic) return;
+    
+    const link = document.createElement('a');
+    link.href = generatedMusic.audioUrl;
+    link.download = `meditation-music-${Date.now()}.${generatedMusic.format}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "⬇️ Download Started",
+      description: "Your meditation music is downloading",
+    });
   };
 
   return (
@@ -296,23 +377,56 @@ STANDALONE MODE:
               </CardContent>
             </Card>
 
-            <Button 
-              onClick={generatePrompt} 
-              disabled={isGenerating}
-              className="w-full h-12 bg-gradient-meditation hover:opacity-90 transition-all shadow-meditation"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  {isAgentRegistered ? 'Generating via Coral Protocol...' : 'Generating...'}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  {isAgentRegistered ? 'Generate with Coral Protocol' : 'Generate Music Prompt'}
-                </>
+            <div className="space-y-3">
+              <Button 
+                onClick={generatePrompt} 
+                disabled={isGenerating}
+                className="w-full h-12 bg-gradient-meditation hover:opacity-90 transition-all shadow-meditation"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    {isAgentRegistered ? 'Generating via Coral Protocol...' : 'Generating...'}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    {isAgentRegistered ? 'Generate with Coral Protocol' : 'Generate Music Prompt'}
+                  </>
+                )}
+              </Button>
+              
+              {generatedPrompt && (
+                <Button 
+                  onClick={generateMusic}
+                  disabled={isGeneratingMusic}
+                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                >
+                  {isGeneratingMusic ? (
+                    <>
+                      <Music className="mr-2 h-4 w-4 animate-pulse" />
+                      Generating Music... ({config.duration}min)
+                    </>
+                  ) : (
+                    <>
+                      <Music className="mr-2 h-4 w-4" />
+                      Generate MP3 Music
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+              
+              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <div className={`h-2 w-2 rounded-full ${isAgentRegistered ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
+                  Prompt {isAgentRegistered ? 'Connected' : 'Standalone'}
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className={`h-2 w-2 rounded-full ${isMusicAgentRegistered ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
+                  Music {isMusicAgentRegistered ? 'Connected' : 'Standalone'}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Output Section */}
@@ -356,10 +470,67 @@ STANDALONE MODE:
           </div>
         </div>
 
+        {/* Generated Music Section */}
+        {generatedMusic && (
+          <div className="mt-8">
+            <Card className="border-purple-500/20 bg-gradient-to-br from-background to-purple-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-600">
+                  <Music className="h-5 w-5" />
+                  Generated Meditation Music
+                </CardTitle>
+                <CardDescription>
+                  AI-generated meditation soundscape ready for use
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Duration: {Math.round(generatedMusic.duration)}s</div>
+                    <div className="text-sm text-muted-foreground">Model: {generatedMusic.model}</div>
+                    <div className="text-sm text-muted-foreground">Format: {generatedMusic.format.toUpperCase()}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-muted-foreground">Generated in</div>
+                    <div className="text-xs text-muted-foreground">{generatedMusic.generationTime}ms</div>
+                  </div>
+                </div>
+
+                <audio 
+                  controls 
+                  className="w-full"
+                  src={generatedMusic.audioUrl}
+                >
+                  Your browser does not support the audio element.
+                </audio>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={downloadMusic}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download Audio
+                  </Button>
+                  <Button
+                    onClick={() => setGeneratedMusic(null)}
+                    variant="outline" 
+                    size="sm"
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="text-center mt-12 text-sm text-muted-foreground">
           <p>Powered by Coral Protocol MCP Agent Framework</p>
-          <p className="mt-1">Designed for seamless integration with AI music generation systems</p>
+          <p className="mt-1">DiffRhythm & AudioCraft integration for full meditation music generation</p>
         </div>
       </div>
     </div>
