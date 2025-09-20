@@ -74,10 +74,11 @@ export const ElevenLabsGenerator = () => {
       console.log('🚀 Starting ElevenLabs generation...');
       const response = await provider.generateMusic(prompt, config);
       
+      console.log('✅ Music generated successfully:', response);
       setGeneratedMusic(response);
       toast({
         title: "Music Generated Successfully",
-        description: `Generated ${response.duration}s track with ElevenLabs`,
+        description: `Generated ${response.duration}s track with ElevenLabs. Download option now available!`,
       });
     } catch (error) {
       console.error('❌ ElevenLabs generation failed:', error);
@@ -325,7 +326,7 @@ export const ElevenLabsGenerator = () => {
       </Card>
 
       {/* Generated Music Player */}
-      {generatedMusic && (
+      {generatedMusic && generatedMusic.audioUrl && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
