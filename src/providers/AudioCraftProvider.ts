@@ -61,25 +61,66 @@ export class AudioCraftProvider implements MusicProvider {
         const beatPhase = (t * tempo) % 1;
         
         if (hasPiano) {
-          // Generate piano-like tones with harmonics
-          const fundamentalFreqs = [261.63, 293.66, 329.63, 349.23, 392.00]; // C, D, E, F, G
+          // Generate continuous flowing piano composition
+          const pianoNotes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]; // C4 to C5
           
-          fundamentalFreqs.forEach((freq, index) => {
-            const noteDelay = index * 1.2; // Stagger notes
-            if (t > noteDelay) {
-              const noteTime = t - noteDelay;
-              const attack = Math.max(0, 1 - noteTime * 3); // Quick attack
-              const decay = Math.exp(-noteTime * 0.8); // Moderate decay
+          // Create overlapping melodic phrases throughout the duration
+          const phraseDuration = Math.max(4, duration / 6); // Multiple phrases
+          const currentPhrase = Math.floor(t / phraseDuration);
+          const phraseProgress = (t % phraseDuration) / phraseDuration;
+          
+          // Melodic patterns that create flowing music
+          const melodyPatterns = [
+            [0, 2, 4, 2, 1, 3, 2, 0, 4, 1], // Pattern 1
+            [4, 2, 5, 3, 6, 4, 2, 1, 3, 0], // Pattern 2  
+            [1, 3, 5, 7, 6, 4, 2, 0, 3, 1], // Pattern 3
+            [3, 1, 4, 2, 5, 3, 1, 0, 2, 4]  // Pattern 4
+          ];
+          
+          const currentPattern = melodyPatterns[currentPhrase % melodyPatterns.length];
+          const notesPerPattern = currentPattern.length;
+          
+          // Play continuous notes with overlap
+          for (let noteIdx = 0; noteIdx < notesPerPattern; noteIdx++) {
+            const noteStartTime = (noteIdx / notesPerPattern) * phraseDuration + currentPhrase * phraseDuration;
+            const noteLength = (phraseDuration / notesPerPattern) * 2; // 2x overlap for continuous flow
+            
+            if (t >= noteStartTime && t < noteStartTime + noteLength) {
+              const noteProgress = (t - noteStartTime) / noteLength;
+              const freq = pianoNotes[currentPattern[noteIdx]];
               
-              // Piano harmonics (fundamental + overtones)
-              const fundamental = Math.sin(2 * Math.PI * freq * noteTime);
-              const harmonic2 = 0.5 * Math.sin(2 * Math.PI * freq * 2 * noteTime);
-              const harmonic3 = 0.25 * Math.sin(2 * Math.PI * freq * 3 * noteTime);
+              // Extended ADSR envelope for sustained piano
+              let envelope = 1;
+              if (noteProgress < 0.05) {
+                envelope = noteProgress / 0.05; // Attack
+              } else if (noteProgress < 0.15) {
+                envelope = 1 - (noteProgress - 0.05) * 0.3 / 0.1; // Decay
+              } else if (noteProgress < 0.85) {
+                envelope = 0.7 - (noteProgress - 0.15) * 0.2 / 0.7; // Long sustain with gradual decay
+              } else {
+                envelope = 0.5 * (1 - (noteProgress - 0.85) / 0.15); // Release
+              }
               
-              const pianoTone = (fundamental + harmonic2 + harmonic3) * attack * decay * 0.1;
+              // Rich harmonic content
+              const fundamental = Math.sin(2 * Math.PI * freq * t);
+              const harmonic2 = 0.4 * Math.sin(2 * Math.PI * freq * 2 * t);
+              const harmonic3 = 0.2 * Math.sin(2 * Math.PI * freq * 3 * t);
+              const harmonic4 = 0.1 * Math.sin(2 * Math.PI * freq * 4 * t);
+              
+              const pianoTone = (fundamental + harmonic2 + harmonic3 + harmonic4) * envelope * 0.12;
               sample += pianoTone;
             }
-          });
+          }
+          
+          // Add sustained bass harmony
+          if (t > 0.5) { // Start bass after melody begins
+            const bassFreqs = [130.81, 146.83, 164.81, 146.83]; // C3, D3, E3, D3
+            const bassIndex = Math.floor(t / (phraseDuration / 2)) % bassFreqs.length;
+            const bassFreq = bassFreqs[bassIndex];
+            const bassEnvelope = 0.4 + 0.1 * Math.sin(2 * Math.PI * 0.1 * t);
+            const bassSound = Math.sin(2 * Math.PI * bassFreq * t) * bassEnvelope * 0.06;
+            sample += bassSound;
+          }
         }
         
         if (hasNature) {

@@ -240,6 +240,19 @@ export const AgentOrchestrator: React.FC = () => {
         <p className="text-muted-foreground text-lg">
           Hackathon demonstration of seamless multi-agent coordination for therapeutic music generation
         </p>
+        
+        {/* Coral Protocol Status */}
+        <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 mt-4">
+          <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
+            🌊 Coral Protocol Status
+          </h3>
+          <div className="text-xs text-blue-600 dark:text-blue-300 space-y-1">
+            <p><strong>Current Mode:</strong> Demo/Simulation - Agents are simulated for development</p>
+            <p><strong>To Register Agent:</strong> Deploy to production and visit <a href="https://coral-protocol.dev" className="underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">coral-protocol.dev</a></p>
+            <p><strong>Search Agents:</strong> Use the Coral Protocol registry to find and integrate real agents</p>
+            <p><strong>For Beginners:</strong> This demo shows how agents communicate via handoffs and message buses</p>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="orchestrator" className="w-full">
