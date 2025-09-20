@@ -4,6 +4,7 @@
  */
 
 import { MusicProvider, MusicGenerationConfig, GeneratedMusic } from '@/services/MusicGenerationService';
+import { supabase } from '@/integrations/supabase/client';
 
 export class ElevenLabsProvider implements MusicProvider {
   name = 'ElevenLabs Music';
@@ -20,8 +21,44 @@ export class ElevenLabsProvider implements MusicProvider {
     
     const optimizedPrompt = this.optimizePromptForElevenLabs(prompt, config);
     
-    // For demo purposes, we'll simulate the API call and generate demo audio
-    // In production, this would call the actual ElevenLabs Music API
+    try {
+      // Call the real ElevenLabs API via Supabase edge function
+      const { data, error } = await supabase.functions.invoke('elevenlabs-music', {
+        body: {
+          prompt: optimizedPrompt,
+          duration: (config.duration || 30) * 1000 // Convert to milliseconds
+        }
+      });
+
+      if (error) {
+        console.error('❌ ElevenLabs API error:', error);
+        // Fall back to demo if API fails
+        return this.generateDemo(optimizedPrompt, config);
+      }
+
+      if (data && data.audioData) {
+        // Convert base64 audio back to blob
+        const audioBlob = this.base64ToBlob(data.audioData, data.format || 'audio/mpeg');
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        return {
+          audioUrl,
+          duration: data.duration || config.duration || 30,
+          format: data.format || 'mp3',
+          metadata: {
+            model: 'ElevenLabs Music API',
+            prompt: optimizedPrompt,
+            config,
+            generatedAt: new Date().toISOString(),
+          },
+        };
+      }
+    } catch (error) {
+      console.error('❌ Failed to generate music with ElevenLabs API:', error);
+    }
+    
+    // Fall back to demo if API call fails
+    console.log('⚠️ Falling back to demo mode');
     return this.generateDemo(optimizedPrompt, config);
   }
 
@@ -217,6 +254,18 @@ export class ElevenLabsProvider implements MusicProvider {
     }
     
     return 1;
+  }
+
+  private base64ToBlob(base64: string, mimeType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
   }
 
   private async bufferToBlob(buffer: AudioBuffer): Promise<string> {
