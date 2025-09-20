@@ -3,7 +3,7 @@
  * Professional AI music generation powered by ElevenLabs
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -11,8 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Music, Clock, Download, Play, Pause, Volume2, Headphones, Mic, Radio } from 'lucide-react';
+import { Music, Clock, Download, Play, Pause, Volume2, Headphones, Mic, Radio, User, Library } from 'lucide-react';
 import { ElevenLabsOnlyProvider, ElevenLabsConfig, ElevenLabsResponse } from '@/providers/ElevenLabsOnlyProvider';
+import { supabase } from '@/integrations/supabase/client';
+import { User as SupabaseUser } from '@supabase/supabase-js';
+import { MusicPlayer } from './MusicPlayer';
+
+interface MusicTrack {
+  id: string;
+  title: string;
+  file_url: string;
+  duration?: number;
+  prompt: string;
+  style?: string;
+  mood?: string;
+  created_at: string;
+}
 
 export const ElevenLabsGenerator = () => {
   const [prompt, setPrompt] = useState(
@@ -30,9 +44,119 @@ export const ElevenLabsGenerator = () => {
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [generatedMusic, setGeneratedMusic] = useState<ElevenLabsResponse | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([]);
 
   const { toast } = useToast();
   const provider = new ElevenLabsOnlyProvider();
+
+  useEffect(() => {
+    // Get initial session
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchMusicTracks();
+      }
+    };
+
+    getSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchMusicTracks();
+        } else {
+          setMusicTracks([]);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchMusicTracks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('music_tracks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setMusicTracks(data || []);
+    } catch (error) {
+      console.error('Error fetching music tracks:', error);
+    }
+  };
+
+  const saveGeneratedTrack = async (response: ElevenLabsResponse) => {
+    if (!user) return;
+
+    try {
+      // Create a descriptive title based on the prompt
+      const title = prompt.length > 50 ? `${prompt.substring(0, 47)}...` : prompt;
+      
+      const { error } = await supabase
+        .from('music_tracks')
+        .insert({
+          user_id: user.id,
+          title,
+          prompt,
+          file_url: response.audioUrl,
+          duration: response.duration,
+          style,
+          mood,
+          tempo: tempo[0],
+          key,
+          instruments
+        });
+
+      if (error) throw error;
+
+      // Refresh the tracks list
+      await fetchMusicTracks();
+      
+      toast({
+        title: "Track Saved! 💾",
+        description: "Your generated music has been saved to your library",
+      });
+    } catch (error) {
+      console.error('Error saving track:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save track to your library",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteMusicTrack = async (trackId: string) => {
+    try {
+      const { error } = await supabase
+        .from('music_tracks')
+        .delete()
+        .eq('id', trackId);
+
+      if (error) throw error;
+
+      // Refresh the music tracks list
+      await fetchMusicTracks();
+      
+      toast({
+        title: "Success",
+        description: "Track deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting track:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete track",
+        variant: "destructive",
+      });
+    }
+  };
 
   const generateMusic = async () => {
     if (!prompt.trim()) {
@@ -71,9 +195,15 @@ export const ElevenLabsGenerator = () => {
       console.log('✅ Music generated successfully:', response);
       setGenerationProgress(100);
       setGeneratedMusic(response);
+      
+      // Save to database if user is logged in
+      if (user) {
+        await saveGeneratedTrack(response);
+      }
+      
       toast({
         title: "Music Generated Successfully! 🎵",
-        description: `Generated ${response.duration}s track. Click play to listen or download!`,
+        description: `Generated ${response.duration}s track. ${user ? 'Saved to your library!' : 'Sign in to save tracks to your library.'}`,
       });
     } catch (error) {
       console.error('❌ ElevenLabs generation failed:', error);
@@ -156,6 +286,20 @@ export const ElevenLabsGenerator = () => {
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Professional AI music generation powered by ElevenLabs
         </p>
+
+        {/* User Status */}
+        {user && (
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <Badge variant="secondary" className="px-3 py-1">
+              <User className="h-3 w-3 mr-1" />
+              {user.email?.split('@')[0]}
+            </Badge>
+            <Badge variant="outline" className="px-3 py-1">
+              <Library className="h-3 w-3 mr-1" />
+              {musicTracks.length} tracks saved
+            </Badge>
+          </div>
+        )}
 
         {/* Studio Visualizer */}
         <div className="mt-8 flex items-center justify-center gap-1">
@@ -413,6 +557,52 @@ export const ElevenLabsGenerator = () => {
                   Download
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Music Library Section */}
+      {user && musicTracks.length > 0 && (
+        <Card className="border-0 bg-gradient-to-br from-card via-card/95 to-peaceful/5 shadow-studio">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <div className="p-2 rounded-lg bg-gradient-audio shadow-soft">
+                <Library className="h-5 w-5 text-white" />
+              </div>
+              Your Music Library
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MusicPlayer 
+              tracks={musicTracks}
+              onDeleteTrack={deleteMusicTrack}
+              showDeleteButton={true}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sign In Prompt for Guests */}
+      {!user && (
+        <Card className="border-0 bg-gradient-to-r from-card via-meditation/5 to-peaceful/5 shadow-meditation">
+          <CardContent className="p-8 text-center">
+            <div className="space-y-4">
+              <div className="p-3 rounded-full bg-gradient-studio shadow-glow mx-auto w-fit">
+                <User className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">Save Your Creations</h3>
+                <p className="text-muted-foreground">
+                  Sign in to save your generated music tracks, create playlists, and access your personal music library.
+                </p>
+              </div>
+              <Button 
+                onClick={() => window.location.href = '/auth'}
+                className="mt-4 bg-gradient-studio hover:shadow-studio transition-all duration-300"
+              >
+                Sign In to Save Music
+              </Button>
             </div>
           </CardContent>
         </Card>

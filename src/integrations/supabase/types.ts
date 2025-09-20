@@ -151,6 +151,54 @@ export type Database = {
         }
         Relationships: []
       }
+      music_tracks: {
+        Row: {
+          created_at: string
+          duration: number | null
+          file_url: string
+          id: string
+          instruments: string[] | null
+          key: string | null
+          mood: string | null
+          prompt: string
+          style: string | null
+          tempo: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration?: number | null
+          file_url: string
+          id?: string
+          instruments?: string[] | null
+          key?: string | null
+          mood?: string | null
+          prompt: string
+          style?: string | null
+          tempo?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration?: number | null
+          file_url?: string
+          id?: string
+          instruments?: string[] | null
+          key?: string | null
+          mood?: string | null
+          prompt?: string
+          style?: string | null
+          tempo?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

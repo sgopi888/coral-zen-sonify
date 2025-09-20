@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Eye, Key, Activity, Trash2 } from 'lucide-react';
+import { Copy, Eye, Key, Activity, Trash2, Music } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { MusicPlayer } from './MusicPlayer';
 
 interface Agent {
   id: string;
@@ -20,6 +21,17 @@ interface Agent {
   version: string;
   status: string;
   metadata: any;
+  created_at: string;
+}
+
+interface MusicTrack {
+  id: string;
+  title: string;
+  file_url: string;
+  duration?: number;
+  prompt: string;
+  style?: string;
+  mood?: string;
   created_at: string;
 }
 
@@ -36,6 +48,7 @@ interface ApiKey {
 export default function AgentDashboard() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([]);
   const [newKeyName, setNewKeyName] = useState('');
   const [selectedAgent, setSelectedAgent] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -57,6 +70,7 @@ export default function AgentDashboard() {
       setUser(session.user);
       fetchAgents();
       fetchApiKeys();
+      fetchMusicTracks();
     };
 
     checkAuth();
@@ -67,6 +81,7 @@ export default function AgentDashboard() {
       if (session) {
         fetchAgents();
         fetchApiKeys();
+        fetchMusicTracks();
       }
     });
 
@@ -105,6 +120,20 @@ export default function AgentDashboard() {
       setApiKeys(data || []);
     } catch (error) {
       console.error('Error fetching API keys:', error);
+    }
+  };
+
+  const fetchMusicTracks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('music_tracks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setMusicTracks(data || []);
+    } catch (error) {
+      console.error('Error fetching music tracks:', error);
     }
   };
 
@@ -175,54 +204,16 @@ export default function AgentDashboard() {
 
   const deleteApiKey = async (keyId: string, keyName: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to delete API keys",
-          variant: "destructive",
-        });
-        return;
-      }
+      const { error } = await supabase
+        .from('agent_api_keys')
+        .delete()
+        .eq('id', keyId);
 
-      // Find the API key to get the agent endpoint
-      const apiKey = apiKeys.find(k => k.id === keyId);
-      if (!apiKey) {
-        toast({
-          title: "Error",
-          description: "API key not found",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
 
-      const agent = agents.find(a => a.id === apiKey.agent_id);
-      if (!agent) {
-        toast({
-          title: "Error", 
-          description: "Agent not found",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Extract agent endpoint (remove /agents/ prefix)
-      const agentEndpoint = agent.endpoint.replace('/agents/', '');
+      // Refresh the API keys list
+      await fetchApiKeys();
       
-      const response = await fetch(`/functions/v1/agents/${agentEndpoint}/api-keys/${keyId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete API key');
-      }
-
-      fetchApiKeys();
       toast({
         title: "Success",
         description: `API key "${keyName}" deleted successfully`,
@@ -232,6 +223,32 @@ export default function AgentDashboard() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to delete API key",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteMusicTrack = async (trackId: string) => {
+    try {
+      const { error } = await supabase
+        .from('music_tracks')
+        .delete()
+        .eq('id', trackId);
+
+      if (error) throw error;
+
+      // Refresh the music tracks list
+      await fetchMusicTracks();
+      
+      toast({
+        title: "Success",
+        description: "Track deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting track:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete track",
         variant: "destructive",
       });
     }
@@ -449,6 +466,32 @@ export default function AgentDashboard() {
               </p>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Music Library */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Music className="h-5 w-5" />
+            Your Music Library
+          </CardTitle>
+          <CardDescription>
+            Generated music tracks and playlists
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {musicTracks.length > 0 ? (
+            <MusicPlayer 
+              tracks={musicTracks}
+              onDeleteTrack={deleteMusicTrack}
+              showDeleteButton={true}
+            />
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              No music tracks generated yet. Use the music generator to create your first track!
+            </p>
+          )}
         </CardContent>
       </Card>
 
