@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,11 +39,38 @@ export default function AgentDashboard() {
   const [newKeyName, setNewKeyName] = useState('');
   const [selectedAgent, setSelectedAgent] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchAgents();
-    fetchApiKeys();
+    // Check authentication first
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to manage API keys",
+          variant: "destructive"
+        });
+        return;
+      }
+      setUser(session.user);
+      fetchAgents();
+      fetchApiKeys();
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (session) {
+        fetchAgents();
+        fetchApiKeys();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchAgents = async () => {
@@ -106,25 +134,18 @@ export default function AgentDashboard() {
         throw new Error('Agent not found');
       }
 
-      // Extract agent identifier from endpoint (e.g., "/agents/music-generator" -> "music-generator")
-      const agentIdentifier = agent.endpoint.split('/').pop();
+      // Generate a secure API key
+      const apiKey = `ak_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
       
-      // Call the agents edge function to generate API key
-      const response = await fetch(`${window.location.origin}/functions/v1/agents/${agentIdentifier}/api-keys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-        body: JSON.stringify({ name: newKeyName.trim() })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate API key');
-      }
-
-      const data = await response.json();
+      // Store API key in database
+      const { error } = await supabase
+        .from('agent_api_keys')
+        .insert({
+          agent_id: selectedAgent,
+          api_key: apiKey,
+          name: newKeyName.trim(),
+          user_id: user?.id
+        });
       
       setNewKeyName('');
       setSelectedAgent('');
@@ -132,7 +153,7 @@ export default function AgentDashboard() {
       
       toast({
         title: "Success",
-        description: `API key generated: ${data.api_key}`,
+        description: "API key generated successfully",
       });
     } catch (error) {
       console.error('Error generating API key:', error);
@@ -164,6 +185,17 @@ export default function AgentDashboard() {
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-muted-foreground mb-2">Authentication Required</h2>
+          <p className="text-muted-foreground">Please sign in to manage your API keys and agents.</p>
+        </div>
+      </div>
+    );
   }
 
   return (

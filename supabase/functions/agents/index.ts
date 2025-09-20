@@ -104,6 +104,7 @@ serve(async (req) => {
           agent_id: agent.id,
           api_key: apiKey,
           name: keyName,
+          user_id: user.id,
           is_active: true
         })
 
@@ -130,7 +131,7 @@ serve(async (req) => {
       if (apiKey) {
         const { data: keyData, error: keyError } = await supabase
           .from('agent_api_keys')
-          .select('id, agent_id, is_active')
+          .select('id, agent_id, user_id, is_active')
           .eq('api_key', apiKey)
           .eq('is_active', true)
           .single()
@@ -184,28 +185,29 @@ serve(async (req) => {
       const responseData = await musicResponse.json()
       const duration = Date.now() - startTime
 
-      // Log the usage if API key was provided
-      if (apiKey) {
-        const { data: keyData } = await supabase
-          .from('agent_api_keys')
-          .select('id, agent_id')
-          .eq('api_key', apiKey)
-          .single()
+        // Log the usage if API key was provided
+        if (apiKey) {
+          const { data: keyData } = await supabase
+            .from('agent_api_keys')
+            .select('id, agent_id, user_id')
+            .eq('api_key', apiKey)
+            .single()
 
-        if (keyData) {
-          await supabase
-            .from('agent_usage_logs')
-            .insert({
-              agent_id: keyData.agent_id,
-              api_key_id: keyData.id,
-              endpoint: '/agents/music-generator',
-              request_data: requestBody,
-              response_data: responseData,
-              status_code: musicResponse.status,
-              duration_ms: duration
-            })
+          if (keyData) {
+            await supabase
+              .from('agent_usage_logs')
+              .insert({
+                agent_id: keyData.agent_id,
+                api_key_id: keyData.id,
+                user_id: keyData.user_id,
+                endpoint: '/agents/music-generator',
+                request_data: requestBody,
+                response_data: responseData,
+                status_code: musicResponse.status,
+                duration_ms: duration
+              })
+          }
         }
-      }
 
       return new Response(JSON.stringify(responseData), {
         status: musicResponse.status,

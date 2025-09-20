@@ -24,6 +24,7 @@ export type Database = {
           last_used: string | null
           name: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           agent_id: string
@@ -34,6 +35,7 @@ export type Database = {
           last_used?: string | null
           name: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           agent_id?: string
@@ -44,6 +46,7 @@ export type Database = {
           last_used?: string | null
           name?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -66,6 +69,7 @@ export type Database = {
           request_data: Json | null
           response_data: Json | null
           status_code: number | null
+          user_id: string
         }
         Insert: {
           agent_id: string
@@ -77,6 +81,7 @@ export type Database = {
           request_data?: Json | null
           response_data?: Json | null
           status_code?: number | null
+          user_id: string
         }
         Update: {
           agent_id?: string
@@ -88,6 +93,7 @@ export type Database = {
           request_data?: Json | null
           response_data?: Json | null
           status_code?: number | null
+          user_id?: string
         }
         Relationships: [
           {
