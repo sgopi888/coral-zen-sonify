@@ -20,10 +20,10 @@ serve(async (req) => {
 
     console.log('Generating music with ElevenLabs:', { prompt, duration })
 
-    const response = await fetch('https://api.elevenlabs.io/v1/music/compose', {
+    const response = await fetch('https://api.elevenlabs.io/v1/music/detailed', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${elevenLabsApiKey}`,
+        'xi-api-key': elevenLabsApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

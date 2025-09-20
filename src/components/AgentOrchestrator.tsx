@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export const AgentOrchestrator = () => {
   const [userRequest, setUserRequest] = useState("");
-  const [generatedPrompt, setGeneratedPrompt] = useState("");
+  const [generatedPrompt, setGeneratedPrompt] = useState("Create a peaceful piano meditation composition with gentle, flowing melodies. Use soft, contemplative chord progressions in a minor key. Include subtle ambient textures and nature sounds like gentle rain or flowing water. The tempo should be slow and calming, around 60-70 BPM. Focus on creating a serene atmosphere perfect for deep meditation and stress relief.");
   const [generatedMusic, setGeneratedMusic] = useState<any>(null);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [isGeneratingMusic, setIsGeneratingMusic] = useState(false);
@@ -44,32 +44,37 @@ export const AgentOrchestrator = () => {
     
     setIsGeneratingPrompt(true);
     try {
-      // Simple prompt generation for demo
-      let prompt = userRequest;
+      // Enhance the existing prompt with user request
+      let enhancedPrompt = generatedPrompt;
+      
+      // Add user request context to the existing prompt
+      if (userRequest.trim()) {
+        enhancedPrompt = `${userRequest.trim()}. ${generatedPrompt}`;
+      }
       
       // Add some enhancements based on common music generation patterns
       if (userRequest.toLowerCase().includes('meditation')) {
-        prompt += '. Create a peaceful, meditative composition with gentle melodies and soothing harmonies';
+        enhancedPrompt += '. Create a peaceful, meditative composition with gentle melodies and soothing harmonies';
       }
       if (userRequest.toLowerCase().includes('upbeat')) {
-        prompt += '. Make it energetic and uplifting with a strong rhythm';
+        enhancedPrompt += '. Make it energetic and uplifting with a strong rhythm';
       }
       if (userRequest.toLowerCase().includes('classical')) {
-        prompt += '. Use classical music elements with rich orchestration';
+        enhancedPrompt += '. Use classical music elements with rich orchestration';
       }
       
-      prompt += `. Duration: ${duration[0]} seconds. High quality audio production.`;
+      enhancedPrompt += `. Duration: ${duration[0]} seconds. High quality audio production.`;
       
-      setGeneratedPrompt(prompt);
+      setGeneratedPrompt(enhancedPrompt);
       toast({
-        title: "Prompt Generated",
-        description: "Music prompt has been created successfully",
+        title: "Prompt Enhanced",
+        description: "Music prompt has been enhanced with your request",
       });
     } catch (error) {
       console.error('Error generating prompt:', error);
       toast({
         title: "Error",
-        description: "Failed to generate prompt",
+        description: "Failed to enhance prompt",
         variant: "destructive",
       });
     } finally {
@@ -170,8 +175,8 @@ export const AgentOrchestrator = () => {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Duration: {duration[0]} seconds</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Duration: {duration[0]} seconds</label>
               <Slider
                 value={duration}
                 onValueChange={setDuration}
@@ -217,36 +222,59 @@ export const AgentOrchestrator = () => {
       </Card>
 
       {/* Generated Prompt */}
-      {generatedPrompt && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Generated Prompt</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="p-3 bg-muted rounded-lg mb-4">
-              <p className="text-sm">{generatedPrompt}</p>
-            </div>
-            <Button 
-              onClick={generateMusic}
-              disabled={isGeneratingMusic}
-              className="w-full"
-              size="lg"
-            >
-              {isGeneratingMusic ? (
-                <>
-                  <Clock className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Music with {selectedProvider}...
-                </>
-              ) : (
-                <>
-                  <Music className="mr-2 h-4 w-4" />
-                  Generate Music
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Music Generation Prompt (Editable)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <textarea
+              className="w-full h-32 p-3 border rounded-lg resize-none text-sm"
+              value={generatedPrompt}
+              onChange={(e) => setGeneratedPrompt(e.target.value)}
+              placeholder="Edit the music generation prompt..."
+            />
+            {userRequest.trim() && (
+              <Button 
+                onClick={generatePrompt}
+                disabled={isGeneratingPrompt}
+                variant="outline"
+                className="w-full"
+              >
+                {isGeneratingPrompt ? (
+                  <>
+                    <Clock className="mr-2 h-4 w-4 animate-spin" />
+                    Enhancing Prompt...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="mr-2 h-4 w-4" />
+                    Enhance Prompt from Request
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+          <Button 
+            onClick={generateMusic}
+            disabled={isGeneratingMusic || !generatedPrompt.trim()}
+            className="w-full"
+            size="lg"
+          >
+            {isGeneratingMusic ? (
+              <>
+                <Clock className="mr-2 h-4 w-4 animate-spin" />
+                Generating Music with {selectedProvider}...
+              </>
+            ) : (
+              <>
+                <Music className="mr-2 h-4 w-4" />
+                Generate Music
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Generated Music */}
       {generatedMusic && (
