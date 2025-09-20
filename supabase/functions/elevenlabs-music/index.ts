@@ -11,11 +11,24 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, duration = 10000 } = await req.json()
+    const { prompt, duration = 10000, healthCheck = false } = await req.json()
     const elevenLabsApiKey = Deno.env.get('ELEVENLABS_API_KEY')
 
     if (!elevenLabsApiKey) {
       throw new Error('ElevenLabs API key not configured')
+    }
+
+    // Handle health check requests
+    if (healthCheck) {
+      return new Response(
+        JSON.stringify({ status: 'healthy', message: 'ElevenLabs API key configured' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate prompt for actual generation
+    if (!prompt || prompt.trim().length === 0) {
+      throw new Error('Prompt is required for music generation')
     }
 
     console.log('Generating music with ElevenLabs:', { prompt, duration })

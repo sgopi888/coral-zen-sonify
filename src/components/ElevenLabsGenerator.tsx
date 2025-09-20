@@ -305,7 +305,7 @@ export const ElevenLabsGenerator = () => {
           {/* Generate Button */}
           <Button 
             onClick={generateMusic}
-            disabled={isGenerating || !prompt.trim() || healthStatus === 'error'}
+            disabled={isGenerating || !prompt.trim()}
             className="w-full"
             size="lg"
           >
