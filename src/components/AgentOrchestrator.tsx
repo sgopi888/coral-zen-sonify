@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AudioLines, Bot, Activity, Zap, CheckCircle, AlertCircle, Clock, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { AudioLines, Bot, Activity, Zap, CheckCircle, AlertCircle, Clock, Download, Settings } from 'lucide-react';
 import { messageBus } from '@/services/CoralMessageBus';
 import { enhancedMeditationAgent } from './EnhancedCoralProtocolAgent';
 import { enhancedMusicAgent } from './EnhancedMusicGenerationAgent';
@@ -35,6 +37,8 @@ export const AgentOrchestrator: React.FC = () => {
   const [systemStatus, setSystemStatus] = useState<any>(null);
   const [finalResult, setFinalResult] = useState<any>(null);
   const [userInput, setUserInput] = useState('Create a peaceful meditation track for stress relief with gentle nature sounds');
+  const [selectedProvider, setSelectedProvider] = useState<'diffrhythm' | 'audiocraft'>('audiocraft');
+  const [duration, setDuration] = useState<number>(10);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -132,7 +136,7 @@ export const AgentOrchestrator: React.FC = () => {
       ));
 
       const promptResult = await enhancedMeditationAgent.processRequest(userInput, {
-        duration: 10,
+        duration: duration,
         style: userInput.toLowerCase().includes('piano') ? 'piano meditation' : 'ambient meditation',
         mood: 'peaceful',
         binaural: true,
@@ -154,7 +158,7 @@ export const AgentOrchestrator: React.FC = () => {
       ));
 
       const musicResult = await enhancedMeditationAgent.initiateHandoffToMusicAgent(promptResult, {
-        duration: 10,
+        duration: duration,
         style: userInput.toLowerCase().includes('piano') ? 'piano meditation' : 'ambient meditation',
         mood: 'peaceful',
         binaural: true,
@@ -163,7 +167,8 @@ export const AgentOrchestrator: React.FC = () => {
           ['piano', 'nature sounds'] : 
           userInput.toLowerCase().includes('guitar') ?
           ['guitar', 'nature sounds'] :
-          ['singing bowl', 'nature sounds', 'soft pad']
+          ['singing bowl', 'nature sounds', 'soft pad'],
+        preferredProvider: selectedProvider
       });
 
       setWorkflow(prev => prev.map(step => 
@@ -259,12 +264,83 @@ export const AgentOrchestrator: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <textarea
-                  className="w-full h-24 p-3 border rounded-lg resize-none"
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  placeholder="Describe your meditation music vision..."
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="music-prompt">Meditation Music Request</Label>
+                  <textarea
+                    id="music-prompt"
+                    className="w-full h-24 p-3 border rounded-lg resize-none"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    placeholder="Describe your meditation music vision..."
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="provider-select">Music Provider</Label>
+                    <Select value={selectedProvider} onValueChange={(value: 'diffrhythm' | 'audiocraft') => setSelectedProvider(value)}>
+                      <SelectTrigger id="provider-select" className="bg-background border border-input">
+                        <SelectValue placeholder="Select provider" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-input z-50">
+                        <SelectItem value="audiocraft" className="hover:bg-accent">
+                          <div className="flex items-center gap-2">
+                            <AudioLines className="h-4 w-4" />
+                            <div>
+                              <div className="font-medium">AudioCraft</div>
+                              <div className="text-xs text-muted-foreground">Browser-based, instant generation</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="diffrhythm" className="hover:bg-accent">
+                          <div className="flex items-center gap-2">
+                            <Zap className="h-4 w-4" />
+                            <div>
+                              <div className="font-medium">DiffRhythm</div>
+                              <div className="text-xs text-muted-foreground">AI-powered, high quality</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="duration-select">Duration (minutes)</Label>
+                    <Select value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value))}>
+                      <SelectTrigger id="duration-select" className="bg-background border border-input">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-input z-50">
+                        <SelectItem value="2">2 minutes</SelectItem>
+                        <SelectItem value="5">5 minutes</SelectItem>
+                        <SelectItem value="10">10 minutes</SelectItem>
+                        <SelectItem value="15">15 minutes</SelectItem>
+                        <SelectItem value="20">20 minutes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Provider Info</Label>
+                    <div className="p-2 text-sm bg-muted rounded-lg">
+                      {selectedProvider === 'audiocraft' ? (
+                        <div>
+                          <div className="font-medium text-green-600">✓ Available</div>
+                          <div>Max: 30 seconds per segment</div>
+                          <div>Real instruments synthesis</div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="font-medium text-orange-600">⚠ Demo Mode</div>
+                          <div>Max: 4+ minutes</div>
+                          <div>Requires API key for production</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
                 <Button 
                   onClick={startOrchestration}
                   disabled={isGenerating}
@@ -274,12 +350,12 @@ export const AgentOrchestrator: React.FC = () => {
                   {isGenerating ? (
                     <>
                       <Activity className="mr-2 h-4 w-4 animate-spin" />
-                      Orchestrating Agents...
+                      Generating with {selectedProvider}...
                     </>
                   ) : (
                     <>
                       <Zap className="mr-2 h-4 w-4" />
-                      Start Agent Orchestration
+                      Generate Music with {selectedProvider}
                     </>
                   )}
                 </Button>

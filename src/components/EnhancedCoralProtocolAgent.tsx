@@ -17,6 +17,7 @@ export interface MusicPromptConfig {
   intention?: string;
   binaural?: boolean;
   frequency?: number;
+  preferredProvider?: string;
 }
 
 export interface PromptGenerationResult {

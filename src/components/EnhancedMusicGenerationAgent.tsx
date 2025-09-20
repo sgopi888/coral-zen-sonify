@@ -118,6 +118,12 @@ export class EnhancedMusicGenerationAgent {
     
     switch (handoff.handoffType) {
       case 'prompt-to-music':
+        // Set provider preference if specified
+        if (handoff.payload.musicConfig?.preferredProvider) {
+          console.log(`🎛️ Setting preferred provider: ${handoff.payload.musicConfig.preferredProvider}`);
+          this.musicService.setPreferredProvider(handoff.payload.musicConfig.preferredProvider);
+        }
+        
         return await this.generateEnhancedMusic({
           prompt: handoff.payload.generatedPrompt,
           config: handoff.payload.musicConfig,
@@ -221,6 +227,12 @@ export class EnhancedMusicGenerationAgent {
   }
 
   private selectOptimalProvider(config: any): string {
+    // If user explicitly selected a provider, use it
+    if (config.preferredProvider) {
+      console.log(`🎯 User selected provider: ${config.preferredProvider}`);
+      return config.preferredProvider;
+    }
+    
     // Use DiffRhythm for longer, more complex tracks
     if (config.duration > 15 || config.instruments?.length > 2 || config.binaural) {
       return 'diffrhythm';
