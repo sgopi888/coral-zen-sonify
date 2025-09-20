@@ -39,6 +39,18 @@ export default {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        meditation: {
+          DEFAULT: "hsl(var(--meditation))",
+          foreground: "hsl(var(--meditation-foreground))",
+        },
+        zen: {
+          DEFAULT: "hsl(var(--zen))",
+          foreground: "hsl(var(--zen-foreground))",
+        },
+        peaceful: {
+          DEFAULT: "hsl(var(--peaceful))",
+          foreground: "hsl(var(--peaceful-foreground))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -80,10 +92,32 @@ export default {
             height: "0",
           },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.8" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "float": "float 6s ease-in-out infinite",
+        "pulse-soft": "pulse-soft 4s ease-in-out infinite",
+      },
+      backgroundImage: {
+        "gradient-meditation": "var(--gradient-meditation)",
+        "gradient-zen": "var(--gradient-zen)",
+        "gradient-peaceful": "var(--gradient-peaceful)",
+      },
+      boxShadow: {
+        "soft": "var(--shadow-soft)",
+        "meditation": "var(--shadow-meditation)",
+      },
+      transitionTimingFunction: {
+        "zen": "var(--transition-zen)",
       },
     },
   },
