@@ -377,6 +377,31 @@ const generateMusic = async () => {
       {/* Rate Limits */}
       <Card>
         <CardHeader>
+          <CardTitle>How to Test Your Agent</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+              <h4 className="font-semibold mb-2">Step 1: Generate API Key</h4>
+              <p className="text-sm text-gray-700">Go to the Agent Dashboard above and generate an API key for the Music Generator agent.</p>
+            </div>
+            
+            <div className="p-4 border border-green-200 rounded-lg bg-green-50">
+              <h4 className="font-semibold mb-2">Step 2: Test with cURL</h4>
+              <p className="text-sm text-gray-700">Copy the cURL example above, replace "your-api-key-here" with your actual API key, and run it in your terminal.</p>
+            </div>
+            
+            <div className="p-4 border border-purple-200 rounded-lg bg-purple-50">
+              <h4 className="font-semibold mb-2">Step 3: Integrate into Your App</h4>
+              <p className="text-sm text-gray-700">Use the JavaScript, Python, or Node.js examples to integrate music generation into your application.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Rate Limits */}
+      <Card>
+        <CardHeader>
           <CardTitle>Rate Limits & Guidelines</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

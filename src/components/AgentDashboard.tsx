@@ -100,18 +100,31 @@ export default function AgentDashboard() {
     }
 
     try {
-      // Generate a simple API key
-      const apiKey = `ak_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-      
-      const { error } = await supabase
-        .from('agent_api_keys')
-        .insert({
-          agent_id: selectedAgent,
-          api_key: apiKey,
-          name: newKeyName.trim()
-        });
+      // Find the selected agent to get its endpoint
+      const agent = agents.find(a => a.id === selectedAgent);
+      if (!agent) {
+        throw new Error('Agent not found');
+      }
 
-      if (error) throw error;
+      // Extract agent identifier from endpoint (e.g., "/agents/music-generator" -> "music-generator")
+      const agentIdentifier = agent.endpoint.split('/').pop();
+      
+      // Call the agents edge function to generate API key
+      const response = await fetch(`${window.location.origin}/functions/v1/agents/${agentIdentifier}/api-keys`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({ name: newKeyName.trim() })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate API key');
+      }
+
+      const data = await response.json();
       
       setNewKeyName('');
       setSelectedAgent('');
@@ -119,7 +132,7 @@ export default function AgentDashboard() {
       
       toast({
         title: "Success",
-        description: "API key generated successfully",
+        description: `API key generated: ${data.api_key}`,
       });
     } catch (error) {
       console.error('Error generating API key:', error);
