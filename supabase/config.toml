@@ -2,3 +2,6 @@ project_id = "thzhvpxpkajthfkzfxbr"
 
 [functions.agents]
 verify_jwt = false
+
+[functions.agents-v2]
+verify_jwt = false

@@ -28,7 +28,7 @@ export const ApiDocumentation = () => {
     }
   };
 
-  const curlExample = `curl -X POST "https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/agents/music-generator" \\
+  const curlExample = `curl -X POST "https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/agents-v2/music-generator" \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: your-api-key-here" \\
   -d '{
@@ -44,7 +44,7 @@ export const ApiDocumentation = () => {
   const javascriptExample = `// Using fetch API
 const generateMusic = async () => {
   const response = await fetch(
-    'https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/agents/music-generator',
+    'https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/agents-v2/music-generator',
     {
       method: 'POST',
       headers: {
@@ -77,7 +77,7 @@ const generateMusic = async () => {
 import json
 
 def generate_music():
-    url = "https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/agents/music-generator"
+    url = "https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/agents-v2/music-generator"
     
     headers = {
         "Content-Type": "application/json",
@@ -109,7 +109,7 @@ def generate_music():
 const generateMusic = async () => {
   try {
     const response = await axios.post(
-      'https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/agents/music-generator',
+      'https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/agents-v2/music-generator',
       {
         prompt: 'Create a peaceful piano meditation track',
         duration: 60,
@@ -191,17 +191,17 @@ const generateMusic = async () => {
             <div className="space-y-2">
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Badge variant="default">POST</Badge>
-                <code className="text-sm">/agents/music-generator</code>
+                <code className="text-sm">/agents-v2/music-generator</code>
                 <span className="text-sm text-muted-foreground">Generate music from text prompt</span>
               </div>
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Badge variant="outline">GET</Badge>
-                <code className="text-sm">/agents</code>
+                <code className="text-sm">/agents-v2</code>
                 <span className="text-sm text-muted-foreground">List available agents</span>
               </div>
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Badge variant="outline">GET</Badge>
-                <code className="text-sm">/agents/test</code>
+                <code className="text-sm">/agents-v2/test</code>
                 <span className="text-sm text-muted-foreground">Test endpoint connectivity</span>
               </div>
             </div>
@@ -352,7 +352,7 @@ const generateMusic = async () => {
                 <Badge variant="destructive">404</Badge>
                 <span className="font-medium">Endpoint Not Found</span>
               </div>
-              <p className="text-sm text-gray-600">Check the endpoint URL - use /agents/music-generator for generation</p>
+              <p className="text-sm text-gray-600">Check the endpoint URL - use /agents-v2/music-generator for generation</p>
             </div>
 
             <div className="p-4 border border-red-200 rounded-lg bg-red-50">
