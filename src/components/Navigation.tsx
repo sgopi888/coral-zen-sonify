@@ -26,14 +26,21 @@ export function Navigation() {
               <Link to="/">Generator</Link>
             </Button>
             <Button
-              variant={location.pathname === '/dashboard' ? 'default' : 'ghost'}
+              variant={location.pathname === '/agents' ? 'default' : 'ghost'}
               size="sm"
               asChild
             >
-              <Link to="/dashboard">
+              <Link to="/agents">
                 <Settings className="h-4 w-4 mr-2" />
                 Dashboard
               </Link>
+            </Button>
+            <Button
+              variant={location.pathname === '/documentation' ? 'default' : 'ghost'}
+              size="sm"
+              asChild
+            >
+              <Link to="/documentation">API Docs</Link>
             </Button>
           </div>
         </div>

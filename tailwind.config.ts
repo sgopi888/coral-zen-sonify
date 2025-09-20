@@ -43,6 +43,15 @@ export default {
           DEFAULT: "hsl(var(--meditation))",
           foreground: "hsl(var(--meditation-foreground))",
         },
+        studio: {
+          DEFAULT: "hsl(var(--studio-primary))",
+          secondary: "hsl(var(--studio-secondary))",
+          accent: "hsl(var(--studio-accent))",
+          neutral: "hsl(var(--studio-neutral))",
+        },
+        "music-wave": "hsl(var(--music-wave))",
+        "music-beat": "hsl(var(--music-beat))",
+        "audio-glow": "hsl(var(--audio-glow))",
         zen: {
           DEFAULT: "hsl(var(--zen))",
           foreground: "hsl(var(--zen-foreground))",
@@ -108,15 +117,22 @@ export default {
         "pulse-soft": "pulse-soft 4s ease-in-out infinite",
       },
       backgroundImage: {
+        "gradient-studio": "var(--gradient-studio)",
+        "gradient-waveform": "var(--gradient-waveform)",
+        "gradient-audio": "var(--gradient-audio)",
         "gradient-meditation": "var(--gradient-meditation)",
         "gradient-zen": "var(--gradient-zen)",
         "gradient-peaceful": "var(--gradient-peaceful)",
       },
       boxShadow: {
+        "studio": "var(--shadow-studio)",
+        "waveform": "var(--shadow-waveform)",
+        "glow": "var(--shadow-glow)",
         "soft": "var(--shadow-soft)",
         "meditation": "var(--shadow-meditation)",
       },
       transitionTimingFunction: {
+        "studio": "var(--transition-studio)",
         "zen": "var(--transition-zen)",
       },
     },

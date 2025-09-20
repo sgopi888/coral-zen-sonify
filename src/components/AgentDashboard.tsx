@@ -81,16 +81,26 @@ export default function AgentDashboard() {
   };
 
   const generateApiKey = async () => {
-    if (!newKeyName.trim() || !selectedAgent) {
+    if (!newKeyName.trim()) {
       toast({
         title: "Error",
-        description: "Please provide a key name and select an agent",
-        variant: "destructive"
+        description: "Please enter a name for the API key",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedAgent) {
+      toast({
+        title: "Error", 
+        description: "Please select an agent",
+        variant: "destructive",
       });
       return;
     }
 
     try {
+      // Generate a simple API key
       const apiKey = `ak_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
       
       const { error } = await supabase
@@ -115,8 +125,8 @@ export default function AgentDashboard() {
       console.error('Error generating API key:', error);
       toast({
         title: "Error",
-        description: "Failed to generate API key",
-        variant: "destructive"
+        description: error instanceof Error ? error.message : "Failed to generate API key",
+        variant: "destructive",
       });
     }
   };

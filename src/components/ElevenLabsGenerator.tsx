@@ -1,6 +1,6 @@
 /**
- * ElevenLabs-Only Music Generator Component
- * Pure ElevenLabs implementation with no demo fallback
+ * Professional ElevenLabs Music Studio
+ * Professional AI music generation powered by ElevenLabs
  */
 
 import React, { useState } from 'react';
@@ -11,9 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Music, Clock, Download, Play, Pause, Volume2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Music, Clock, Download, Play, Pause, Volume2, Headphones, Mic, Radio } from 'lucide-react';
 import { ElevenLabsOnlyProvider, ElevenLabsConfig, ElevenLabsResponse } from '@/providers/ElevenLabsOnlyProvider';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export const ElevenLabsGenerator = () => {
   const [prompt, setPrompt] = useState(
@@ -30,25 +29,10 @@ export const ElevenLabsGenerator = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [generatedMusic, setGeneratedMusic] = useState<ElevenLabsResponse | null>(null);
-  const [healthStatus, setHealthStatus] = useState<'checking' | 'healthy' | 'error'>('checking');
   const [generationProgress, setGenerationProgress] = useState(0);
 
   const { toast } = useToast();
   const provider = new ElevenLabsOnlyProvider();
-
-  React.useEffect(() => {
-    checkProviderHealth();
-  }, []);
-
-  const checkProviderHealth = async () => {
-    setHealthStatus('checking');
-    try {
-      const isHealthy = await provider.checkHealth();
-      setHealthStatus(isHealthy ? 'healthy' : 'error');
-    } catch (error) {
-      setHealthStatus('error');
-    }
-  };
 
   const generateMusic = async () => {
     if (!prompt.trim()) {
@@ -149,247 +133,287 @@ export const ElevenLabsGenerator = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl space-y-6">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
-          ElevenLabs Music Generator
+    <div className="container mx-auto p-6 max-w-6xl space-y-8">
+      {/* Professional Studio Header */}
+      <div className="text-center mb-12">
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <div className="p-3 rounded-full bg-gradient-studio shadow-studio">
+            <Headphones className="h-8 w-8 text-white" />
+          </div>
+          <div className="h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent"></div>
+          <div className="p-3 rounded-full bg-gradient-waveform shadow-waveform">
+            <Radio className="h-8 w-8 text-white" />
+          </div>
+          <div className="h-12 w-px bg-gradient-to-b from-transparent via-accent to-transparent"></div>
+          <div className="p-3 rounded-full bg-gradient-audio shadow-glow">
+            <Mic className="h-8 w-8 text-white" />
+          </div>
+        </div>
+        
+        <h1 className="text-5xl font-bold bg-gradient-studio bg-clip-text text-transparent mb-4">
+          ElevenLabs Music Studio
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Professional AI music generation powered by ElevenLabs
         </p>
-        
-        {/* Health Status */}
-        <div className="flex items-center justify-center gap-2 mt-4">
-          {healthStatus === 'checking' && (
-            <Badge variant="secondary">Checking ElevenLabs API...</Badge>
-          )}
-          {healthStatus === 'healthy' && (
-            <Badge variant="default" className="bg-green-500">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              ElevenLabs API Ready
-            </Badge>
-          )}
-          {healthStatus === 'error' && (
-            <Badge variant="destructive">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              ElevenLabs API Error
-            </Badge>
-          )}
+
+        {/* Studio Visualizer */}
+        <div className="mt-8 flex items-center justify-center gap-1">
+          {Array.from({ length: 24 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-1 bg-gradient-waveform rounded-full opacity-70 animate-pulse-soft"
+              style={{
+                height: `${Math.random() * 40 + 10}px`,
+                animationDelay: `${i * 0.1}s`
+              }}
+            />
+          ))}
         </div>
       </div>
 
-      {healthStatus === 'error' && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Unable to connect to ElevenLabs API. Please check your API key configuration and try again.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Music Generation Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Music className="h-5 w-5" />
-            Music Generation Settings
+      {/* Professional Music Generation Interface */}
+      <Card className="border-0 bg-gradient-to-br from-card via-card/95 to-peaceful/5 shadow-studio">
+        <CardHeader className="pb-6">
+          <CardTitle className="flex items-center gap-3 text-2xl">
+            <div className="p-2 rounded-lg bg-gradient-studio shadow-soft">
+              <Music className="h-6 w-6 text-white" />
+            </div>
+            Composition Studio
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Prompt */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Music Prompt</label>
-            <textarea
-              className="w-full h-32 p-3 border rounded-lg resize-none text-sm"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe the music you want to generate..."
-            />
-          </div>
-
-          {/* Duration */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Duration: {duration[0]} seconds</label>
-            <Slider
-              value={duration}
-              onValueChange={setDuration}
-              max={300}
-              min={10}
-              step={5}
-              className="w-full"
-            />
-          </div>
-
-          {/* Style and Mood */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Style</label>
-              <Select value={style} onValueChange={setStyle}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ambient">Ambient</SelectItem>
-                  <SelectItem value="classical">Classical</SelectItem>
-                  <SelectItem value="electronic">Electronic</SelectItem>
-                  <SelectItem value="jazz">Jazz</SelectItem>
-                  <SelectItem value="folk">Folk</SelectItem>
-                  <SelectItem value="cinematic">Cinematic</SelectItem>
-                  <SelectItem value="meditation">Meditation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Mood</label>
-              <Select value={mood} onValueChange={setMood}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="peaceful">Peaceful</SelectItem>
-                  <SelectItem value="energetic">Energetic</SelectItem>
-                  <SelectItem value="melancholic">Melancholic</SelectItem>
-                  <SelectItem value="uplifting">Uplifting</SelectItem>
-                  <SelectItem value="mysterious">Mysterious</SelectItem>
-                  <SelectItem value="romantic">Romantic</SelectItem>
-                </SelectContent>
-              </Select>
+        <CardContent className="space-y-8">
+          {/* Creative Prompt */}
+          <div className="space-y-4">
+            <label className="text-lg font-semibold text-foreground">Creative Brief</label>
+            <div className="relative">
+              <textarea
+                className="w-full h-36 p-4 border-2 border-muted-foreground/20 rounded-xl resize-none text-sm leading-relaxed bg-gradient-to-br from-background to-meditation/10 focus:border-primary focus:shadow-soft transition-all duration-300"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe your musical vision in detail..."
+              />
+              <div className="absolute bottom-3 right-3 text-xs text-muted-foreground">
+                {prompt.length} characters
+              </div>
             </div>
           </div>
 
-          {/* Tempo */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Tempo: {tempo[0]} BPM</label>
-            <Slider
-              value={tempo}
-              onValueChange={setTempo}
-              max={180}
-              min={40}
-              step={5}
-              className="w-full"
-            />
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Core Parameters */}
+            <div className="space-y-6">
+              {/* Duration Control */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-medium">Track Length</label>
+                  <Badge variant="secondary" className="px-3 py-1">
+                    {duration[0]}s
+                  </Badge>
+                </div>
+                <Slider
+                  value={duration}
+                  onValueChange={setDuration}
+                  max={300}
+                  min={10}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
 
-          {/* Key */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Key Signature</label>
-            <Select value={key} onValueChange={setKey}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="C major">C Major</SelectItem>
-                <SelectItem value="C minor">C Minor</SelectItem>
-                <SelectItem value="D major">D Major</SelectItem>
-                <SelectItem value="D minor">D Minor</SelectItem>
-                <SelectItem value="E major">E Major</SelectItem>
-                <SelectItem value="E minor">E Minor</SelectItem>
-                <SelectItem value="F major">F Major</SelectItem>
-                <SelectItem value="F minor">F Minor</SelectItem>
-                <SelectItem value="G major">G Major</SelectItem>
-                <SelectItem value="G minor">G Minor</SelectItem>
-                <SelectItem value="A major">A Major</SelectItem>
-                <SelectItem value="A minor">A Minor</SelectItem>
-                <SelectItem value="B major">B Major</SelectItem>
-                <SelectItem value="B minor">B Minor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Style & Mood */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <label className="text-base font-medium">Genre</label>
+                  <Select value={style} onValueChange={setStyle}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ambient">Ambient</SelectItem>
+                      <SelectItem value="classical">Classical</SelectItem>
+                      <SelectItem value="electronic">Electronic</SelectItem>
+                      <SelectItem value="jazz">Jazz</SelectItem>
+                      <SelectItem value="folk">Folk</SelectItem>
+                      <SelectItem value="cinematic">Cinematic</SelectItem>
+                      <SelectItem value="meditation">Meditation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          {/* Instruments */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Instruments</label>
-            <div className="flex flex-wrap gap-2">
-              {instrumentOptions.map((instrument) => (
-                <Badge
-                  key={instrument}
-                  variant={instruments.includes(instrument) ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => toggleInstrument(instrument)}
-                >
-                  {instrument}
-                </Badge>
-              ))}
+                <div className="space-y-3">
+                  <label className="text-base font-medium">Mood</label>
+                  <Select value={mood} onValueChange={setMood}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="peaceful">Peaceful</SelectItem>
+                      <SelectItem value="energetic">Energetic</SelectItem>
+                      <SelectItem value="melancholic">Melancholic</SelectItem>
+                      <SelectItem value="uplifting">Uplifting</SelectItem>
+                      <SelectItem value="mysterious">Mysterious</SelectItem>
+                      <SelectItem value="romantic">Romantic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Tempo Control */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-medium">Tempo</label>
+                  <Badge variant="secondary" className="px-3 py-1">
+                    {tempo[0]} BPM
+                  </Badge>
+                </div>
+                <Slider
+                  value={tempo}
+                  onValueChange={setTempo}
+                  max={180}
+                  min={40}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            {/* Right Column - Advanced Parameters */}
+            <div className="space-y-6">
+              {/* Key Signature */}
+              <div className="space-y-3">
+                <label className="text-base font-medium">Key Signature</label>
+                <Select value={key} onValueChange={setKey}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="C major">C Major</SelectItem>
+                    <SelectItem value="C minor">C Minor</SelectItem>
+                    <SelectItem value="D major">D Major</SelectItem>
+                    <SelectItem value="D minor">D Minor</SelectItem>
+                    <SelectItem value="E major">E Major</SelectItem>
+                    <SelectItem value="E minor">E Minor</SelectItem>
+                    <SelectItem value="F major">F Major</SelectItem>
+                    <SelectItem value="F minor">F Minor</SelectItem>
+                    <SelectItem value="G major">G Major</SelectItem>
+                    <SelectItem value="G minor">G Minor</SelectItem>
+                    <SelectItem value="A major">A Major</SelectItem>
+                    <SelectItem value="A minor">A Minor</SelectItem>
+                    <SelectItem value="B major">B Major</SelectItem>
+                    <SelectItem value="B minor">B Minor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Instrument Palette */}
+              <div className="space-y-4">
+                <label className="text-base font-medium">Instrument Palette</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {instrumentOptions.map((instrument) => (
+                    <Badge
+                      key={instrument}
+                      variant={instruments.includes(instrument) ? "default" : "outline"}
+                      className="cursor-pointer py-2 px-3 text-center capitalize hover:scale-105 transition-transform"
+                      onClick={() => toggleInstrument(instrument)}
+                    >
+                      {instrument}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          <Separator />
+          <Separator className="my-8" />
 
           {/* Generate Button */}
           <Button 
             onClick={generateMusic}
             disabled={isGenerating || !prompt.trim()}
-            className="w-full"
+            className="w-full h-14 text-lg bg-gradient-studio hover:shadow-studio transition-all duration-300"
             size="lg"
           >
             {isGenerating ? (
               <>
-                <Clock className="mr-2 h-4 w-4 animate-spin" />
-                Generating with ElevenLabs...
+                <Clock className="mr-3 h-6 w-6 animate-spin" />
+                Composing Your Music...
               </>
             ) : (
               <>
-                <Music className="mr-2 h-4 w-4" />
-                Generate Music
+                <Music className="mr-3 h-6 w-6" />
+                Generate Professional Track
               </>
             )}
           </Button>
           
-          {/* Progress Bar */}
+          {/* Progress Visualization */}
           {isGenerating && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-6 space-y-4">
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>🎵 Creating your music with ElevenLabs...</span>
-                <span>{Math.round(generationProgress)}%</span>
+                <span className="flex items-center gap-2">
+                  <Radio className="h-4 w-4 animate-pulse" />
+                  Creating your masterpiece...
+                </span>
+                <span className="font-medium">{Math.round(generationProgress)}%</span>
               </div>
-              <div className="w-full bg-secondary rounded-full h-3">
+              <div className="w-full bg-secondary rounded-full h-4 overflow-hidden">
                 <div 
-                  className="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-500 ease-out"
+                  className="bg-gradient-studio h-4 rounded-full transition-all duration-700 ease-out shadow-glow"
                   style={{ width: `${generationProgress}%` }}
                 />
               </div>
-              <p className="text-xs text-muted-foreground text-center">
-                Your music will be ready for playback and download shortly...
+              <p className="text-sm text-muted-foreground text-center">
+                High-quality audio synthesis in progress...
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Generated Music Player */}
+      {/* Professional Audio Player */}
       {generatedMusic && generatedMusic.audioUrl && (
-        <Card>
+        <Card className="border-0 bg-gradient-to-r from-card via-meditation/5 to-peaceful/5 shadow-meditation">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Volume2 className="h-5 w-5" />
-              Generated Music
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <div className="p-2 rounded-lg bg-gradient-waveform shadow-soft">
+                <Volume2 className="h-5 w-5 text-white" />
+              </div>
+              Your Generated Track
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">ElevenLabs Music</p>
-                <p className="text-sm text-muted-foreground">
-                  {generatedMusic.duration}s • {generatedMusic.format.toUpperCase()}
-                </p>
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-background/50 to-meditation/10 rounded-xl border border-muted-foreground/10">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-gradient-audio shadow-glow">
+                  <Music className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-lg">Professional Mix</p>
+                  <p className="text-muted-foreground">
+                    {generatedMusic.duration}s • {generatedMusic.format.toUpperCase()} • Studio Quality
+                  </p>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={togglePlayback} variant="outline" size="sm">
-                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              <div className="flex gap-3">
+                <Button 
+                  onClick={togglePlayback} 
+                  variant="outline" 
+                  size="lg"
+                  className="h-12 w-12 rounded-full border-2 hover:shadow-soft transition-all duration-300"
+                >
+                  {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
                 </Button>
-                <Button onClick={downloadMusic} variant="outline" size="sm">
-                  <Download className="h-4 w-4" />
+                <Button 
+                  onClick={downloadMusic} 
+                  variant="outline" 
+                  size="lg"
+                  className="h-12 px-6 hover:shadow-soft transition-all duration-300"
+                >
+                  <Download className="h-5 w-5 mr-2" />
+                  Download
                 </Button>
               </div>
             </div>
-            
-            {/* Metadata */}
-            {generatedMusic.metadata.composition_plan && (
-              <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                <strong>Composition Plan:</strong> Generated with ElevenLabs Music API
-              </div>
-            )}
           </CardContent>
         </Card>
       )}

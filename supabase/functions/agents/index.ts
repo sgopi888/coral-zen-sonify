@@ -60,6 +60,69 @@ serve(async (req) => {
       })
     }
 
+    // POST /agents/:id/api-keys - Generate API key for specific agent
+    if (req.method === 'POST' && path.match(/^\/[^\/]+\/api-keys$/)) {
+      const agentId = path.split('/')[1]
+      
+      // Check if user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser(
+        req.headers.get('Authorization')?.replace('Bearer ', '') || ''
+      )
+      
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Verify agent exists
+      const { data: agent, error: agentError } = await supabase
+        .from('agents')
+        .select('id')
+        .eq('endpoint', `/agents/${agentId}`)
+        .eq('status', 'active')
+        .single()
+
+      if (agentError || !agent) {
+        return new Response(JSON.stringify({ error: 'Agent not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      const requestBody = await req.json()
+      const keyName = requestBody.name || 'Generated API Key'
+      
+      // Generate new API key
+      const apiKey = crypto.randomUUID()
+      
+      // Store in database
+      const { error: insertError } = await supabase
+        .from('agent_api_keys')
+        .insert({
+          agent_id: agent.id,
+          api_key: apiKey,
+          name: keyName,
+          is_active: true
+        })
+
+      if (insertError) {
+        return new Response(JSON.stringify({ error: 'Failed to create API key' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      return new Response(JSON.stringify({ 
+        status: 'success',
+        api_key: apiKey,
+        message: 'API key generated successfully'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     // POST /agents/music-generator - Music generation endpoint
     if (req.method === 'POST' && path === '/music-generator') {
       // Validate API key
