@@ -54,10 +54,16 @@ serve(async (req) => {
     // Get the audio data
     const audioData = await response.arrayBuffer()
     
-    // Convert to base64 for transport
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(audioData))
-    )
+    // Convert to base64 for transport (fixed for large files)
+    const uint8Array = new Uint8Array(audioData)
+    let base64Audio = ''
+    
+    // Process in chunks to avoid call stack overflow
+    const chunkSize = 8192
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize)
+      base64Audio += btoa(String.fromCharCode(...chunk))
+    }
 
     return new Response(
       JSON.stringify({ 

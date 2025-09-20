@@ -65,7 +65,15 @@ export class ElevenLabsOnlyProvider {
         throw new Error(`ElevenLabs API error: ${error.message || 'Unknown error'}`);
       }
 
-      if (!data || !data.audioData) {
+      if (!data) {
+        throw new Error('No data received from ElevenLabs API');
+      }
+
+      if (data.error) {
+        throw new Error(`ElevenLabs API error: ${data.error}`);
+      }
+
+      if (!data.audioData) {
         throw new Error('No audio data received from ElevenLabs API');
       }
 
@@ -73,7 +81,7 @@ export class ElevenLabsOnlyProvider {
       const audioBlob = this.base64ToBlob(data.audioData, data.format || 'audio/mpeg');
       const audioUrl = URL.createObjectURL(audioBlob);
 
-      return {
+      const response = {
         audioUrl,
         duration: data.duration || config.duration || 30,
         format: data.format || 'mp3',
@@ -86,6 +94,14 @@ export class ElevenLabsOnlyProvider {
           song_metadata: data.song_metadata,
         },
       };
+
+      console.log('✅ ElevenLabs music generated successfully:', { 
+        duration: response.duration, 
+        format: response.format,
+        hasAudioUrl: !!response.audioUrl 
+      });
+      
+      return response;
     } catch (error) {
       console.error('❌ ElevenLabs-Only Provider failed:', error);
       throw error; // Re-throw instead of falling back to demo
