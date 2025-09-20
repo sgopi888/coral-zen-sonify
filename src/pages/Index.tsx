@@ -1,7 +1,7 @@
-import { MeditationMusicGenerator } from "@/components/MeditationMusicGenerator";
+import { AgentOrchestrator } from "@/components/AgentOrchestrator";
 
 const Index = () => {
-  return <MeditationMusicGenerator />;
+  return <AgentOrchestrator />;
 };
 
 export default Index;
