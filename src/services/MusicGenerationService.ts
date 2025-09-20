@@ -11,6 +11,8 @@ export interface MusicGenerationConfig {
   key?: string;
   instruments?: string[];
   includeVocals?: boolean;
+  binaural?: boolean;
+  frequency?: number;
 }
 
 export interface GeneratedMusic {

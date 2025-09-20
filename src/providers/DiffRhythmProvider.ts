@@ -37,10 +37,23 @@ export class DiffRhythmProvider implements MusicProvider {
 
   private optimizePromptForMeditation(prompt: string, config: MusicGenerationConfig): string {
     const duration = Math.min(config.duration || 60, this.maxDuration);
+    
+    // Extract key musical elements from the prompt
+    const hasInstruments = prompt.toLowerCase().includes('piano') || 
+                          prompt.toLowerCase().includes('guitar') || 
+                          prompt.toLowerCase().includes('violin') ||
+                          prompt.toLowerCase().includes('flute') ||
+                          prompt.toLowerCase().includes('instruments');
+    
+    // If specific instruments are mentioned, prioritize musical generation
+    if (hasInstruments) {
+      return `${prompt}. High-quality musical composition, ${duration} seconds duration, clear instrumental separation, professional recording quality`;
+    }
+    
+    // Otherwise, use ambient approach
     const style = config.style || 'ambient meditation';
     const tempo = config.tempo || 70;
-    
-    return `${style}, ${tempo} BPM, ${duration} seconds duration, ${prompt}. Soft, flowing, meditative, minimal percussion, sustained tones, gradual harmonic progression`;
+    return `${style}, ${tempo} BPM, ${duration} seconds duration, ${prompt}. Soft, flowing, meditative, natural acoustic sounds`;
   }
 
   private async generateWithAPI(prompt: string, config: MusicGenerationConfig): Promise<GeneratedMusic> {

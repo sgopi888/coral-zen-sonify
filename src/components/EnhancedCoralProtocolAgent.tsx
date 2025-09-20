@@ -206,26 +206,18 @@ export class EnhancedCoralProtocolAgent {
   private generateTherapeuticPrompt(userRequest: string, config: MusicPromptConfig, therapeuticElements: string[]): string {
     let prompt = userRequest;
     
-    // Add therapeutic enhancements
-    if (therapeuticElements.includes('stress-reduction')) {
-      prompt += '. Include calming 432Hz frequencies and gentle ambient textures for deep relaxation';
-    }
-    
-    if (therapeuticElements.includes('sleep-induction')) {
-      prompt += '. Incorporate delta wave patterns (0.5-4Hz) with gradually decreasing tempo for sleep onset';
-    }
-    
-    if (config.binaural && config.frequency) {
-      prompt += `. Add binaural beats at ${config.frequency}Hz for brainwave entrainment`;
-    }
+    // Preserve original musical intent first
+    let musicalElements = [];
     
     // Add duration and structure
     const duration = config.duration || 10;
-    prompt += `. Create a ${duration}-minute composition with gradual build-up and extended sustain phases`;
+    prompt += `. Create a ${duration}-minute composition`;
     
-    // Add instrumental specifications
+    // Add instrumental specifications FIRST - this is crucial
     if (config.instruments && config.instruments.length > 0) {
-      prompt += `. Feature ${config.instruments.join(', ')} with organic, non-repetitive patterns`;
+      const instruments = config.instruments.join(', ');
+      prompt += ` featuring ${instruments} with clear, distinct musical tones and natural playing techniques`;
+      musicalElements.push(`instruments: ${instruments}`);
     }
     
     // Add mood and tempo specifications
@@ -235,7 +227,27 @@ export class EnhancedCoralProtocolAgent {
     
     if (config.tempo) {
       const bpm = config.tempo === 'slow' ? '60-80' : config.tempo === 'medium' ? '80-100' : '100-120';
-      prompt += `. Keep tempo around ${bpm} BPM for optimal therapeutic effect`;
+      prompt += `. Keep tempo around ${bpm} BPM`;
+      musicalElements.push(`tempo: ${bpm} BPM`);
+    }
+
+    // Add musical style and structure
+    if (config.style) {
+      prompt += ` in ${config.style} style with organic, flowing musical phrases`;
+    }
+    
+    // Only THEN add therapeutic enhancements as subtle background elements
+    if (therapeuticElements.includes('stress-reduction')) {
+      prompt += '. Subtly incorporate calming 432Hz tuning for therapeutic effect';
+    }
+    
+    if (therapeuticElements.includes('sleep-induction')) {
+      prompt += '. Use gradually slowing rhythmic patterns to support relaxation';
+    }
+    
+    // Make binaural beats SUBTLE and not dominant
+    if (config.binaural && config.frequency) {
+      prompt += `. Add gentle ${config.frequency}Hz binaural undertones beneath the main musical content`;
     }
 
     return prompt;

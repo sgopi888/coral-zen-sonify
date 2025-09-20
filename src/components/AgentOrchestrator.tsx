@@ -133,11 +133,15 @@ export const AgentOrchestrator: React.FC = () => {
 
       const promptResult = await enhancedMeditationAgent.processRequest(userInput, {
         duration: 10,
-        style: 'ambient meditation',
+        style: userInput.toLowerCase().includes('piano') ? 'piano meditation' : 'ambient meditation',
         mood: 'peaceful',
         binaural: true,
         frequency: 7.83,
-        instruments: ['singing bowl', 'nature sounds', 'soft pad']
+        instruments: userInput.toLowerCase().includes('piano') ? 
+          ['piano', 'nature sounds'] : 
+          userInput.toLowerCase().includes('guitar') ?
+          ['guitar', 'nature sounds'] :
+          ['singing bowl', 'nature sounds', 'soft pad']
       });
 
       setWorkflow(prev => prev.map(step => 
@@ -151,11 +155,15 @@ export const AgentOrchestrator: React.FC = () => {
 
       const musicResult = await enhancedMeditationAgent.initiateHandoffToMusicAgent(promptResult, {
         duration: 10,
-        style: 'ambient meditation',
+        style: userInput.toLowerCase().includes('piano') ? 'piano meditation' : 'ambient meditation',
         mood: 'peaceful',
         binaural: true,
         frequency: 7.83,
-        instruments: ['singing bowl', 'nature sounds', 'soft pad']
+        instruments: userInput.toLowerCase().includes('piano') ? 
+          ['piano', 'nature sounds'] : 
+          userInput.toLowerCase().includes('guitar') ?
+          ['guitar', 'nature sounds'] :
+          ['singing bowl', 'nature sounds', 'soft pad']
       });
 
       setWorkflow(prev => prev.map(step => 
