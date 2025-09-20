@@ -8,6 +8,10 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('=== Agent API Request ===');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -19,7 +23,27 @@ serve(async (req) => {
     )
 
     const url = new URL(req.url)
-    const path = url.pathname.replace('/functions/v1/agents', '')
+    const pathname = url.pathname
+    console.log('Full pathname:', pathname);
+    
+    // Remove the function prefix to get the route - handle multiple possible prefixes
+    let path = pathname.replace('/functions/v1/agents', '')
+    console.log('Cleaned path:', path);
+
+    // Add a simple test endpoint for debugging
+    if (req.method === 'GET' && (path === '/test' || path === 'test')) {
+      console.log('Test endpoint hit');
+      return new Response(JSON.stringify({ 
+        status: 'success', 
+        message: 'Agent function is working',
+        timestamp: new Date().toISOString(),
+        path: path,
+        pathname: pathname,
+        url: req.url
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // GET /agents - List all available agents
     if (req.method === 'GET' && path === '') {
@@ -164,7 +188,9 @@ serve(async (req) => {
     }
 
     // POST /agents/music-generator - Music generation endpoint
-    if (req.method === 'POST' && path === '/music-generator') {
+    if (req.method === 'POST' && (path === '/music-generator' || path === 'music-generator')) {
+      console.log('Music generation endpoint hit!');
+      console.log('API Key present:', !!req.headers.get('x-api-key'));
       // Validate API key
       const apiKey = req.headers.get('x-api-key')
       if (apiKey) {

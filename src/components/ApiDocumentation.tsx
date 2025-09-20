@@ -201,8 +201,8 @@ const generateMusic = async () => {
               </div>
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Badge variant="outline">GET</Badge>
-                <code className="text-sm">/agents/music-generator/metadata</code>
-                <span className="text-sm text-muted-foreground">Get agent metadata</span>
+                <code className="text-sm">/agents/test</code>
+                <span className="text-sm text-muted-foreground">Test endpoint connectivity</span>
               </div>
             </div>
           </div>
@@ -349,10 +349,18 @@ const generateMusic = async () => {
           <div className="space-y-3">
             <div className="p-4 border border-red-200 rounded-lg bg-red-50">
               <div className="flex items-center gap-2 mb-2">
+                <Badge variant="destructive">404</Badge>
+                <span className="font-medium">Endpoint Not Found</span>
+              </div>
+              <p className="text-sm text-gray-600">Check the endpoint URL - use /agents/music-generator for generation</p>
+            </div>
+
+            <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+              <div className="flex items-center gap-2 mb-2">
                 <Badge variant="destructive">401</Badge>
                 <span className="font-medium">Unauthorized</span>
               </div>
-              <p className="text-sm text-gray-600">Invalid or missing API key</p>
+              <p className="text-sm text-gray-600">Invalid or missing API key (required for production use)</p>
             </div>
             
             <div className="p-4 border border-orange-200 rounded-lg bg-orange-50">
@@ -360,7 +368,7 @@ const generateMusic = async () => {
                 <Badge variant="secondary">400</Badge>
                 <span className="font-medium">Bad Request</span>
               </div>
-              <p className="text-sm text-gray-600">Missing required fields or invalid parameters</p>
+              <p className="text-sm text-gray-600">Missing required 'prompt' field or invalid parameters</p>
             </div>
             
             <div className="p-4 border border-red-200 rounded-lg bg-red-50">
@@ -368,7 +376,7 @@ const generateMusic = async () => {
                 <Badge variant="destructive">500</Badge>
                 <span className="font-medium">Server Error</span>
               </div>
-              <p className="text-sm text-gray-600">Internal server error or music generation failed</p>
+              <p className="text-sm text-gray-600">ElevenLabs API error or music generation failed</p>
             </div>
           </div>
         </CardContent>
@@ -382,18 +390,23 @@ const generateMusic = async () => {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
-              <h4 className="font-semibold mb-2">Step 1: Generate API Key</h4>
-              <p className="text-sm text-gray-700">Go to the Agent Dashboard above and generate an API key for the Music Generator agent.</p>
+              <h4 className="font-semibold mb-2">Step 1: Test Connectivity</h4>
+              <p className="text-sm text-gray-700">First test the endpoint: <code className="bg-blue-100 px-1 rounded">GET /agents/test</code> to verify the function is deployed.</p>
             </div>
-            
+
             <div className="p-4 border border-green-200 rounded-lg bg-green-50">
-              <h4 className="font-semibold mb-2">Step 2: Test with cURL</h4>
-              <p className="text-sm text-gray-700">Copy the cURL example above, replace "your-api-key-here" with your actual API key, and run it in your terminal.</p>
+              <h4 className="font-semibold mb-2">Step 2: Test Without API Key (Demo)</h4>
+              <p className="text-sm text-gray-700">Try the music generation endpoint without an API key first. This should work in demo mode.</p>
             </div>
             
             <div className="p-4 border border-purple-200 rounded-lg bg-purple-50">
-              <h4 className="font-semibold mb-2">Step 3: Integrate into Your App</h4>
-              <p className="text-sm text-gray-700">Use the JavaScript, Python, or Node.js examples to integrate music generation into your application.</p>
+              <h4 className="font-semibold mb-2">Step 3: Generate API Key (Production)</h4>
+              <p className="text-sm text-gray-700">For production use, generate an API key from the Agent Dashboard and include it in your requests.</p>
+            </div>
+
+            <div className="p-4 border border-yellow-200 rounded-lg bg-yellow-50">
+              <h4 className="font-semibold mb-2">Step 4: Use the Python Test Script</h4>
+              <p className="text-sm text-gray-700">Download and run <code className="bg-yellow-100 px-1 rounded">agent_test.py</code> for comprehensive testing with detailed debugging.</p>
             </div>
           </div>
         </CardContent>
