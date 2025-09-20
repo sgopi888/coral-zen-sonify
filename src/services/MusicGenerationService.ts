@@ -37,7 +37,7 @@ export interface MusicProvider {
 
 export class MusicGenerationService {
   private providers: Map<string, MusicProvider> = new Map();
-  private primaryProvider: string = 'diffrhythm';
+  private primaryProvider: string = 'elevenlabs';
   private fallbackProvider: string = 'audiocraft';
 
   addProvider(name: string, provider: MusicProvider) {
