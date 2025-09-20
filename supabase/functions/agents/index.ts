@@ -1,3 +1,4 @@
+// Agent API Gateway v1.1.1 - Fixed music-generator routing
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4'
 
@@ -188,8 +189,9 @@ serve(async (req) => {
     }
 
     // POST /agents/music-generator - Music generation endpoint
+    console.log('DEBUG: Checking music-generator route - path:', path, 'method:', req.method);
     if (req.method === 'POST' && (path === '/music-generator' || path === 'music-generator')) {
-      console.log('Music generation endpoint hit!');
+      console.log('🎵 Music generation endpoint hit! Route matched successfully!');
       console.log('API Key present:', !!req.headers.get('x-api-key'));
       // Validate API key
       const apiKey = req.headers.get('x-api-key')
