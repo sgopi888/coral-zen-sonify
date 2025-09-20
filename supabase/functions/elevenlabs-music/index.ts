@@ -51,28 +51,16 @@ serve(async (req) => {
       throw new Error(`ElevenLabs API error: ${response.status}`)
     }
 
-    // Get the audio data
-    const audioData = await response.arrayBuffer()
+    // Return the audio directly as blob - no conversion needed
+    console.log('✅ ElevenLabs API success, returning audio directly')
     
-    // Convert to base64 for transport (fixed for large files)
-    const uint8Array = new Uint8Array(audioData)
-    let base64Audio = ''
-    
-    // Process in chunks to avoid call stack overflow
-    const chunkSize = 8192
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, i + chunkSize)
-      base64Audio += btoa(String.fromCharCode(...chunk))
-    }
-
-    return new Response(
-      JSON.stringify({ 
-        audioData: base64Audio,
-        format: 'audio/mpeg',
-        duration: duration / 1000
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return new Response(response.body, {
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'audio/mpeg',
+        'Content-Disposition': 'attachment; filename="generated-music.mp3"'
+      }
+    })
 
   } catch (error) {
     console.error('Error in elevenlabs-music function:', error)

@@ -31,6 +31,7 @@ export const ElevenLabsGenerator = () => {
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [generatedMusic, setGeneratedMusic] = useState<ElevenLabsResponse | null>(null);
   const [healthStatus, setHealthStatus] = useState<'checking' | 'healthy' | 'error'>('checking');
+  const [generationProgress, setGenerationProgress] = useState(0);
 
   const { toast } = useToast();
   const provider = new ElevenLabsOnlyProvider();
@@ -60,6 +61,16 @@ export const ElevenLabsGenerator = () => {
     }
 
     setIsGenerating(true);
+    setGenerationProgress(0);
+    console.log('🚀 Starting ElevenLabs generation...');
+    
+    // Simulate progress for user feedback
+    const progressInterval = setInterval(() => {
+      setGenerationProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 15;
+      });
+    }, 500);
     
     const config: ElevenLabsConfig = {
       duration: duration[0],
@@ -71,14 +82,14 @@ export const ElevenLabsGenerator = () => {
     };
 
     try {
-      console.log('🚀 Starting ElevenLabs generation...');
       const response = await provider.generateMusic(prompt, config);
       
       console.log('✅ Music generated successfully:', response);
+      setGenerationProgress(100);
       setGeneratedMusic(response);
       toast({
-        title: "Music Generated Successfully",
-        description: `Generated ${response.duration}s track with ElevenLabs. Download option now available!`,
+        title: "Music Generated Successfully! 🎵",
+        description: `Generated ${response.duration}s track. Click play to listen or download!`,
       });
     } catch (error) {
       console.error('❌ ElevenLabs generation failed:', error);
@@ -88,7 +99,9 @@ export const ElevenLabsGenerator = () => {
         variant: "destructive",
       });
     } finally {
+      clearInterval(progressInterval);
       setIsGenerating(false);
+      setTimeout(() => setGenerationProgress(0), 1000);
     }
   };
 
@@ -322,6 +335,25 @@ export const ElevenLabsGenerator = () => {
               </>
             )}
           </Button>
+          
+          {/* Progress Bar */}
+          {isGenerating && (
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>🎵 Creating your music with ElevenLabs...</span>
+                <span>{Math.round(generationProgress)}%</span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-3">
+                <div 
+                  className="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${generationProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Your music will be ready for playback and download shortly...
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

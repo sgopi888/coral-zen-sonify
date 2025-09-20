@@ -53,55 +53,49 @@ export class ElevenLabsOnlyProvider {
     const optimizedPrompt = this.optimizePrompt(prompt, config);
     
     try {
-      const { data, error } = await supabase.functions.invoke('elevenlabs-music', {
-        body: {
+      // Get audio directly as blob from edge function
+      const response = await fetch(`https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/elevenlabs-music`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemh2cHhwa2FqdGhma3pmeGJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzNDQ4MTUsImV4cCI6MjA3MzkyMDgxNX0.TWbA8HzutwumVe89NGfXdVkIWTqOPpHkzU2G_lenzsM`
+        },
+        body: JSON.stringify({
           prompt: optimizedPrompt,
           duration: (config.duration || 30) * 1000 // Convert to milliseconds
-        }
+        })
       });
 
-      if (error) {
-        console.error('❌ ElevenLabs API error:', error);
-        throw new Error(`ElevenLabs API error: ${error.message || 'Unknown error'}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ ElevenLabs API error:', errorText);
+        throw new Error(`ElevenLabs API error: ${response.status}`);
       }
 
-      if (!data) {
-        throw new Error('No data received from ElevenLabs API');
-      }
-
-      if (data.error) {
-        throw new Error(`ElevenLabs API error: ${data.error}`);
-      }
-
-      if (!data.audioData) {
-        throw new Error('No audio data received from ElevenLabs API');
-      }
-
-      // Convert base64 audio back to blob
-      const audioBlob = this.base64ToBlob(data.audioData, data.format || 'audio/mpeg');
+      // Get the audio blob directly
+      const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
 
-      const response = {
+      const result = {
         audioUrl,
-        duration: data.duration || config.duration || 30,
-        format: data.format || 'mp3',
+        duration: config.duration || 30,
+        format: 'mp3',
         metadata: {
           model: 'ElevenLabs Music API',
           prompt: optimizedPrompt,
           config,
           generatedAt: new Date().toISOString(),
-          composition_plan: data.composition_plan,
-          song_metadata: data.song_metadata,
         },
       };
 
       console.log('✅ ElevenLabs music generated successfully:', { 
-        duration: response.duration, 
-        format: response.format,
-        hasAudioUrl: !!response.audioUrl 
+        duration: result.duration, 
+        format: result.format,
+        hasAudioUrl: !!result.audioUrl,
+        blobSize: audioBlob.size
       });
       
-      return response;
+      return result;
     } catch (error) {
       console.error('❌ ElevenLabs-Only Provider failed:', error);
       throw error; // Re-throw instead of falling back to demo
