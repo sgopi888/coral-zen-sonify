@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Music, Clock, Volume2, CheckCircle, AlertCircle, Download, Play } from 'lucide-react';
+import { Sparkles, Music, Clock, Volume2, CheckCircle, AlertCircle, Download, Play, AudioLines } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { meditationMusicAgent } from './CoralProtocolAgent';
 import { musicGenerationAgent, MusicGenerationResponse } from './MusicGenerationAgent';
@@ -404,7 +404,7 @@ STANDALONE MODE:
                 >
                   {isGeneratingMusic ? (
                     <>
-                      <Music className="mr-2 h-4 w-4 animate-pulse" />
+                      <AudioLines className="mr-2 h-4 w-4 animate-pulse" />
                       Generating Music... ({config.duration}min)
                     </>
                   ) : (
@@ -476,7 +476,7 @@ STANDALONE MODE:
             <Card className="border-purple-500/20 bg-gradient-to-br from-background to-purple-500/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-purple-600">
-                  <Music className="h-5 w-5" />
+                  <AudioLines className="h-5 w-5" />
                   Generated Meditation Music
                 </CardTitle>
                 <CardDescription>
