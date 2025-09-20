@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Eye, Key, Activity } from 'lucide-react';
+import { Copy, Eye, Key, Activity, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -171,6 +171,46 @@ export default function AgentDashboard() {
       title: "Copied",
       description: "Copied to clipboard",
     });
+  };
+
+  const deleteApiKey = async (keyId: string, keyName: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to delete API keys",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(`/functions/v1/agents/music-generator/api-keys/${keyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete API key');
+      }
+
+      fetchApiKeys();
+      toast({
+        title: "Success",
+        description: `API key "${keyName}" deleted successfully`,
+      });
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete API key",
+        variant: "destructive",
+      });
+    }
   };
 
   const getCapabilityBadgeColor = (capability: string) => {
@@ -359,13 +399,23 @@ export default function AgentDashboard() {
                       </p>
                     )}
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => copyToClipboard(key.api_key)}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyToClipboard(key.api_key)}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteApiKey(key.id, key.name)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}

@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-key',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
 }
 
 serve(async (req) => {
@@ -119,6 +119,45 @@ serve(async (req) => {
         status: 'success',
         api_key: apiKey,
         message: 'API key generated successfully'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // DELETE /agents/:id/api-keys/:keyId - Delete API key
+    if (req.method === 'DELETE' && path.match(/^\/[^\/]+\/api-keys\/[^\/]+$/)) {
+      const pathParts = path.split('/')
+      const keyId = pathParts[3]
+      
+      // Check if user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser(
+        req.headers.get('Authorization')?.replace('Bearer ', '') || ''
+      )
+      
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Delete API key (RLS will ensure user can only delete their own keys)
+      const { error: deleteError } = await supabase
+        .from('agent_api_keys')
+        .delete()
+        .eq('id', keyId)
+        .eq('user_id', user.id)
+
+      if (deleteError) {
+        return new Response(JSON.stringify({ error: 'Failed to delete API key' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      return new Response(JSON.stringify({ 
+        status: 'success',
+        message: 'API key deleted successfully'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
