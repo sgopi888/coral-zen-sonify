@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,14 +52,50 @@ serve(async (req) => {
       throw new Error(`ElevenLabs API error: ${response.status}`)
     }
 
-    // Return the audio directly as blob - no conversion needed
-    console.log('✅ ElevenLabs API success, returning audio directly')
+    // Store the MP3 file in Supabase Storage and return JSON response
+    console.log('✅ ElevenLabs API success, storing file and returning JSON')
     
-    return new Response(response.body, {
+    const audioBuffer = await response.arrayBuffer()
+    const fileName = `music-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`
+    
+    // Initialize Supabase client for storage
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+    
+    // Upload to storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('music-files')
+      .upload(fileName, audioBuffer, {
+        contentType: 'audio/mpeg',
+        cacheControl: '3600'
+      })
+    
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError)
+      throw new Error(`Failed to store audio file: ${uploadError.message}`)
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('music-files')
+      .getPublicUrl(fileName)
+    
+    const responseJson = {
+      status: 'success',
+      url: urlData.publicUrl,
+      duration: Math.floor(duration / 1000), // Convert to seconds
+      format: 'mp3',
+      filename: fileName,
+      size: audioBuffer.byteLength,
+      generated_at: new Date().toISOString()
+    }
+    
+    return new Response(JSON.stringify(responseJson), {
       headers: { 
         ...corsHeaders, 
-        'Content-Type': 'audio/mpeg',
-        'Content-Disposition': 'attachment; filename="generated-music.mp3"'
+        'Content-Type': 'application/json'
       }
     })
 

@@ -1,0 +1,169 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-key',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    const url = new URL(req.url)
+    const path = url.pathname.replace('/functions/v1/agents', '')
+
+    // GET /agents - List all available agents
+    if (req.method === 'GET' && path === '') {
+      const { data: agents, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('status', 'active')
+
+      if (error) {
+        throw new Error(`Failed to fetch agents: ${error.message}`)
+      }
+
+      return new Response(JSON.stringify({ agents }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // GET /agents/{agent-id}/metadata - Get specific agent metadata
+    if (req.method === 'GET' && path.match(/^\/[^\/]+\/metadata$/)) {
+      const agentId = path.split('/')[1]
+      
+      const { data: agent, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('endpoint', `/agents/${agentId}`)
+        .eq('status', 'active')
+        .single()
+
+      if (error) {
+        return new Response(JSON.stringify({ error: 'Agent not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      return new Response(JSON.stringify(agent), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // POST /agents/music-generator - Music generation endpoint
+    if (req.method === 'POST' && path === '/music-generator') {
+      // Validate API key
+      const apiKey = req.headers.get('x-api-key')
+      if (apiKey) {
+        const { data: keyData, error: keyError } = await supabase
+          .from('agent_api_keys')
+          .select('id, agent_id, is_active')
+          .eq('api_key', apiKey)
+          .eq('is_active', true)
+          .single()
+
+        if (keyError || !keyData) {
+          return new Response(JSON.stringify({ error: 'Invalid or inactive API key' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        // Update last_used timestamp
+        await supabase
+          .from('agent_api_keys')
+          .update({ last_used: new Date().toISOString() })
+          .eq('id', keyData.id)
+      }
+
+      const startTime = Date.now()
+      const requestBody = await req.json()
+      
+      // Validate required fields
+      if (!requestBody.prompt) {
+        return new Response(JSON.stringify({ 
+          error: 'Missing required field: prompt',
+          status: 'error'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Call the music generation function
+      const musicResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/elevenlabs-music`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.get('Authorization') || `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+        },
+        body: JSON.stringify({
+          prompt: requestBody.prompt,
+          duration: (requestBody.duration || 60) * 1000, // Convert to milliseconds
+          style: requestBody.style,
+          mood: requestBody.mood,
+          tempo: requestBody.tempo,
+          key: requestBody.key,
+          instruments: requestBody.instruments || ['piano', 'strings']
+        })
+      })
+
+      const responseData = await musicResponse.json()
+      const duration = Date.now() - startTime
+
+      // Log the usage if API key was provided
+      if (apiKey) {
+        const { data: keyData } = await supabase
+          .from('agent_api_keys')
+          .select('id, agent_id')
+          .eq('api_key', apiKey)
+          .single()
+
+        if (keyData) {
+          await supabase
+            .from('agent_usage_logs')
+            .insert({
+              agent_id: keyData.agent_id,
+              api_key_id: keyData.id,
+              endpoint: '/agents/music-generator',
+              request_data: requestBody,
+              response_data: responseData,
+              status_code: musicResponse.status,
+              duration_ms: duration
+            })
+        }
+      }
+
+      return new Response(JSON.stringify(responseData), {
+        status: musicResponse.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // Default 404 response
+    return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+
+  } catch (error) {
+    console.error('Error in agents function:', error)
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      status: 'error'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+})

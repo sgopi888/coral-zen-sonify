@@ -23,6 +23,8 @@ export interface ElevenLabsResponse {
     prompt: string;
     config: ElevenLabsConfig;
     generatedAt: string;
+    filename?: string;
+    size?: number;
     composition_plan?: any;
     song_metadata?: any;
   };
@@ -53,7 +55,7 @@ export class ElevenLabsOnlyProvider {
     const optimizedPrompt = this.optimizePrompt(prompt, config);
     
     try {
-      // Get audio directly as blob from edge function
+      // Call the updated edge function that returns JSON
       const response = await fetch(`https://thzhvpxpkajthfkzfxbr.supabase.co/functions/v1/elevenlabs-music`, {
         method: 'POST',
         headers: {
@@ -67,32 +69,37 @@ export class ElevenLabsOnlyProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ ElevenLabs API error:', errorText);
-        throw new Error(`ElevenLabs API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ ElevenLabs API error:', errorData);
+        throw new Error(`ElevenLabs API error: ${errorData.error || response.status}`);
       }
 
-      // Get the audio blob directly
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      // Parse JSON response
+      const data = await response.json();
+      
+      if (data.status !== 'success') {
+        throw new Error(data.error || 'Music generation failed');
+      }
 
       const result = {
-        audioUrl,
-        duration: config.duration || 30,
-        format: 'mp3',
+        audioUrl: data.url,
+        duration: data.duration,
+        format: data.format || 'mp3',
         metadata: {
           model: 'ElevenLabs Music API',
           prompt: optimizedPrompt,
           config,
-          generatedAt: new Date().toISOString(),
+          generatedAt: data.generated_at || new Date().toISOString(),
+          filename: data.filename,
+          size: data.size
         },
       };
 
       console.log('✅ ElevenLabs music generated successfully:', { 
         duration: result.duration, 
         format: result.format,
-        hasAudioUrl: !!result.audioUrl,
-        blobSize: audioBlob.size
+        url: result.audioUrl,
+        size: data.size
       });
       
       return result;
