@@ -158,7 +158,7 @@ export class EnhancedCoralProtocolAgent {
     
     const handoff = messageBus.createHandoffMessage(
       this.config.agentId,
-      'music-generation-agent-v1',
+      'music-generation-agent-v2',
       'prompt-to-music',
       {
         generatedPrompt: promptResult.optimizedPrompt,

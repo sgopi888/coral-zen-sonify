@@ -54,14 +54,24 @@ export const AgentOrchestrator: React.FC = () => {
       await enhancedMeditationAgent.register();
       await enhancedMusicAgent.register();
       
+      // Verify agents are properly registered
+      const promptRegistered = messageBus.isAgentRegistered('meditation-music-generator-v2');
+      const musicRegistered = messageBus.isAgentRegistered('music-generation-agent-v2');
+      
+      console.log('🔍 Agent registration status:', { promptRegistered, musicRegistered });
+      
       // Get system status
       const status = await messageBus.getSystemStatus();
       setSystemStatus(status);
       
-      toast({
-        title: "System Ready",
-        description: `${status.totalAgents} agents registered and ready for orchestration`,
-      });
+      if (promptRegistered && musicRegistered) {
+        toast({
+          title: "System Ready",
+          description: `${status.totalAgents} agents registered and ready for orchestration`,
+        });
+      } else {
+        throw new Error(`Agent registration failed - Prompt: ${promptRegistered}, Music: ${musicRegistered}`);
+      }
     } catch (error) {
       console.error('❌ System initialization failed:', error);
       toast({
