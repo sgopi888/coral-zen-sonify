@@ -185,7 +185,31 @@ export default function AgentDashboard() {
         return;
       }
 
-      const response = await fetch(`/functions/v1/agents/music-generator/api-keys/${keyId}`, {
+      // Find the API key to get the agent endpoint
+      const apiKey = apiKeys.find(k => k.id === keyId);
+      if (!apiKey) {
+        toast({
+          title: "Error",
+          description: "API key not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const agent = agents.find(a => a.id === apiKey.agent_id);
+      if (!agent) {
+        toast({
+          title: "Error", 
+          description: "Agent not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Extract agent endpoint (remove /agents/ prefix)
+      const agentEndpoint = agent.endpoint.replace('/agents/', '');
+      
+      const response = await fetch(`/functions/v1/agents/${agentEndpoint}/api-keys/${keyId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
